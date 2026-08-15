@@ -1,0 +1,44 @@
+{
+  "timestamp_generated": "2026-08-15T06:35:19.907672",
+  "total_raw_files_processed": 192,
+  "total_raw_records_read": 7579008,
+  "total_canonical_records_written": 7579008,
+  "total_excluded_records": 0,
+  "exclusion_breakdown": {},
+  "site_record_counts": {
+    "ARIK": 2105280,
+    "BIGC": 2105280,
+    "BLDE": 2105280,
+    "BLUE": 1052640,
+    "BARC": 210528
+  },
+  "temporal_2024_records": 3794688,
+  "temporal_2025_records": 3784320,
+  "duplicate_records_detected": 0,
+  "arik_accountability": {
+    "raw_records_present": 2105280,
+    "canonical_records_preserved": 2105280,
+    "canonical_percent_preserved": 100
+  },
+  "quality_flag_summary": {
+    "out_of_instrument_range": {
+      "ph": 20686,
+      "dissolved_oxygen": 16899,
+      "turbidity": 112819,
+      "specific_conductance": 429747,
+      "chlorophyll": 3,
+      "fdom": 180645,
+      "sensor_depth": 422
+    },
+    "neon_qf_fail": {
+      "ph": 1960137,
+      "dissolved_oxygen": 1898464,
+      "turbidity": 1928151,
+      "specific_conductance": 1755320,
+      "chlorophyll": 79290,
+      "fdom": 3049385,
+      "sensor_depth": 33072
+    }
+  },
+  "raw_files_sha256_verified": true
+}
