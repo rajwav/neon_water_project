@@ -1,0 +1,273 @@
+{
+  "version": "5.0.0",
+  "description": "SIH 2026 Live Demonstration Scenarios for NEON Water Intelligence Platform",
+  "scenarios": [
+    {
+      "id": 1,
+      "name": "Normal River Water — Pristine Baseline",
+      "description": "All water quality parameters are within healthy ecological bounds. This scenario establishes the baseline 'SAFE' state that SIH judges will see as the default healthy river condition.",
+      "category": "NOMINAL",
+      "sensor_values": {
+        "ph": 7.42,
+        "dissolved_oxygen": 8.65,
+        "turbidity": 4.5,
+        "specific_conductance": 280.0,
+        "temperature": 21.3,
+        "nitrate_mg_l": 0.45,
+        "phosphate_mg_l": 0.015,
+        "chlorophyll_a_ug_l": 2.8,
+        "suspended_sediment": 35.0,
+        "lead_risk_index": 0.02,
+        "mercury_risk_index": 0.01,
+        "arsenic_risk_index": 0.01,
+        "microbial_risk_index": 5.0,
+        "site_id": "WOKWI_SITE",
+        "sensor_position": "001",
+        "bio_dominant_taxon": "Ceriodaphnia dubia",
+        "bio_taxa_richness": 3,
+        "biological_sampled": 1
+      },
+      "expected_outputs": {
+        "model_1_anomaly": {
+          "status": "Normal",
+          "score_range": [-0.25, 0.0]
+        },
+        "model_2_risk": {
+          "class": "SAFE",
+          "confidence_min": 0.90
+        },
+        "model_3_biological": {
+          "eco_health_index_min": 85.0,
+          "ecological_tier": "Excellent"
+        },
+        "model_4_forecast": {
+          "future_projected_status": "SAFE",
+          "predicted_do_range": [7.5, 10.0],
+          "forecast_confidence": "High"
+        },
+        "model_5_decision": {
+          "incident_type": "NOMINAL_BASELINE",
+          "severity": "LOW",
+          "confidence_min": 85.0
+        },
+        "final_status": "SAFE"
+      },
+      "demonstration_script": "Start here. Show judges a healthy river with all 5 models confirming safety. Emphasize that ALL AI layers independently validate the 'pristine' classification. Then contrast with emergency scenarios."
+    },
+    {
+      "id": 2,
+      "name": "Industrial Acid Spill — Chemical Emergency",
+      "description": "Simulates an unauthorized industrial acid waste discharge into a river. pH crashes to lethal levels (2.80), conductance spikes from dissolved ionic contaminants, and all biological indicator organisms die. This is the most dramatic scenario for SIH demonstration.",
+      "category": "ACIDIFICATION",
+      "sensor_values": {
+        "ph": 2.80,
+        "dissolved_oxygen": 4.50,
+        "turbidity": 48.0,
+        "specific_conductance": 1450.0,
+        "temperature": 24.0,
+        "nitrate_mg_l": 4.50,
+        "phosphate_mg_l": 0.080,
+        "chlorophyll_a_ug_l": 1.0,
+        "suspended_sediment": 180.0,
+        "lead_risk_index": 0.65,
+        "mercury_risk_index": 0.30,
+        "arsenic_risk_index": 0.40,
+        "microbial_risk_index": 75.0,
+        "site_id": "BLUE",
+        "sensor_position": "112",
+        "bio_dominant_taxon": "None",
+        "bio_taxa_richness": 0,
+        "biological_sampled": 0
+      },
+      "expected_outputs": {
+        "model_1_anomaly": {
+          "status": "Anomaly",
+          "score_range": [0.05, 0.30]
+        },
+        "model_2_risk": {
+          "class": "CRITICAL",
+          "confidence_min": 0.50
+        },
+        "model_3_biological": {
+          "eco_health_index_max": 50.0,
+          "ecological_tier": "Critical"
+        },
+        "model_4_forecast": {
+          "future_projected_status": "WARNING",
+          "forecast_confidence": "Medium"
+        },
+        "model_5_decision": {
+          "incident_type": "ACIDIFICATION",
+          "severity": "CRITICAL",
+          "confidence_min": 92.0,
+          "immediate_actions_expected": [
+            "TRIGGER IMMEDIATE WATER INTAKE SHUTDOWN",
+            "Dispatch HazMat environmental enforcement team",
+            "Notify downstream municipalities"
+          ]
+        },
+        "final_status": "CRITICAL"
+      },
+      "demonstration_script": "After showing the pristine baseline, switch to this preset. Point out: (1) pH 2.80 is like battery acid, (2) Model 1 flags multivariate anomaly, (3) Model 2 classifies CRITICAL, (4) Model 3 shows biological collapse, (5) Model 5 tells authorities EXACTLY what to do — shut water intake, dispatch HazMat, notify public."
+    },
+    {
+      "id": 3,
+      "name": "Eutrophication Event — Algal Bloom & Anoxia",
+      "description": "Simulates agricultural nutrient runoff causing nitrogen/phosphorus overload, algal bloom (high chlorophyll-a), and resulting dissolved oxygen crash to lethal hypoxic levels. This demonstrates how multiple stressors compound together.",
+      "category": "EUTROPHICATION_HYPOXIA",
+      "sensor_values": {
+        "ph": 8.65,
+        "dissolved_oxygen": 1.80,
+        "turbidity": 32.0,
+        "specific_conductance": 580.0,
+        "temperature": 26.5,
+        "nitrate_mg_l": 12.80,
+        "phosphate_mg_l": 0.185,
+        "chlorophyll_a_ug_l": 42.0,
+        "suspended_sediment": 65.0,
+        "lead_risk_index": 0.20,
+        "mercury_risk_index": 0.05,
+        "arsenic_risk_index": 0.08,
+        "microbial_risk_index": 45.0,
+        "site_id": "BARC",
+        "sensor_position": "103",
+        "bio_dominant_taxon": "Microcystis aeruginosa",
+        "bio_taxa_richness": 1,
+        "biological_sampled": 1
+      },
+      "expected_outputs": {
+        "model_1_anomaly": {
+          "status": "Anomaly",
+          "score_range": [0.0, 0.20]
+        },
+        "model_2_risk": {
+          "class": "CRITICAL",
+          "confidence_min": 0.50
+        },
+        "model_3_biological": {
+          "eco_health_index_max": 60.0,
+          "ecological_tier": "Poor"
+        },
+        "model_4_forecast": {
+          "future_projected_status": "WARNING",
+          "predicted_do_range": [1.0, 4.0]
+        },
+        "model_5_decision": {
+          "incident_type": "HYPOXIA",
+          "severity": "CRITICAL",
+          "secondary_incidents_expected": ["EUTROPHICATION", "THERMAL_STRESS"],
+          "confidence_min": 90.0
+        },
+        "final_status": "CRITICAL"
+      },
+      "demonstration_script": "Explain: Agricultural fertilizer runoff causes nitrate (12.8 mg/L) and phosphate (0.185 mg/L) overload. Algae bloom consumes all oxygen, DO crashes to 1.8 mg/L (fish die below 4.0). Model 5 detects MULTIPLE simultaneous incidents — Hypoxia primary, Eutrophication and Thermal Stress secondary. This proves the system understands compound environmental events."
+    },
+    {
+      "id": 4,
+      "name": "Sediment Runoff — Construction Erosion Event",
+      "description": "Simulates an intense storm event causing massive soil erosion from uncontrolled construction sites, smothering the riverbed with suspended sediment and blinding water treatment plant filters.",
+      "category": "SEDIMENT_CONTAMINATION",
+      "sensor_values": {
+        "ph": 6.80,
+        "dissolved_oxygen": 6.20,
+        "turbidity": 185.0,
+        "specific_conductance": 420.0,
+        "temperature": 22.5,
+        "nitrate_mg_l": 2.80,
+        "phosphate_mg_l": 0.045,
+        "chlorophyll_a_ug_l": 8.5,
+        "suspended_sediment": 350.0,
+        "lead_risk_index": 0.15,
+        "mercury_risk_index": 0.05,
+        "arsenic_risk_index": 0.05,
+        "microbial_risk_index": 28.0,
+        "site_id": "ARIK",
+        "sensor_position": "102",
+        "bio_dominant_taxon": "Hyalella azteca",
+        "bio_taxa_richness": 2,
+        "biological_sampled": 1
+      },
+      "expected_outputs": {
+        "model_1_anomaly": {
+          "status": "Anomaly",
+          "score_range": [0.0, 0.25]
+        },
+        "model_2_risk": {
+          "class": "WARNING",
+          "confidence_min": 0.40
+        },
+        "model_3_biological": {
+          "eco_health_index_max": 80.0
+        },
+        "model_4_forecast": {
+          "future_projected_status": "SAFE"
+        },
+        "model_5_decision": {
+          "incident_type": "SEDIMENT_CONTAMINATION",
+          "severity": "HIGH",
+          "confidence_min": 80.0,
+          "immediate_actions_expected": [
+            "Activate coagulant and flocculant dosing",
+            "Temporarily bypass water supply reservoir raw intakes"
+          ]
+        },
+        "final_status": "WARNING"
+      },
+      "demonstration_script": "Show how turbidity (185 FNU) and suspended sediment (350 mg/L) trigger the sediment contamination incident. Model 5 recommends activating coagulant dosing at treatment plants and inspecting construction sites. This shows the system handles PHYSICAL water quality threats, not just chemical."
+    },
+    {
+      "id": 5,
+      "name": "Toxic Contamination — Heavy Metal Industrial Discharge",
+      "description": "Simulates electroplating factory or mining tailings breach releasing toxic heavy metals (lead, mercury, arsenic) into the water supply. Bioassay organisms show acute toxicity stress. This scenario triggers the most severe public health emergency protocol.",
+      "category": "TOXIC_CONTAMINATION",
+      "sensor_values": {
+        "ph": 5.80,
+        "dissolved_oxygen": 6.80,
+        "turbidity": 14.0,
+        "specific_conductance": 1120.0,
+        "temperature": 20.0,
+        "nitrate_mg_l": 1.20,
+        "phosphate_mg_l": 0.020,
+        "chlorophyll_a_ug_l": 3.0,
+        "suspended_sediment": 40.0,
+        "lead_risk_index": 0.88,
+        "mercury_risk_index": 0.72,
+        "arsenic_risk_index": 0.65,
+        "microbial_risk_index": 12.0,
+        "site_id": "BIGC",
+        "sensor_position": "112",
+        "bio_dominant_taxon": "Ceriodaphnia dubia",
+        "bio_taxa_richness": 1,
+        "biological_sampled": 1
+      },
+      "expected_outputs": {
+        "model_1_anomaly": {
+          "status": "Anomaly",
+          "score_range": [0.0, 0.25]
+        },
+        "model_2_risk": {
+          "class": "CRITICAL",
+          "confidence_min": 0.50
+        },
+        "model_3_biological": {
+          "eco_health_index_max": 55.0
+        },
+        "model_4_forecast": {
+          "future_projected_status": "WARNING"
+        },
+        "model_5_decision": {
+          "incident_type": "TOXIC_CONTAMINATION",
+          "severity": "CRITICAL",
+          "confidence_min": 92.0,
+          "immediate_actions_expected": [
+            "MANDATORY WATER UTILITY SHUTDOWN",
+            "Issue public boil-water / alternative drinking water supply emergency notice",
+            "Deploy mobile Inductively Coupled Plasma Mass Spectrometry (ICP-MS) mobile lab"
+          ]
+        },
+        "final_status": "CRITICAL"
+      },
+      "demonstration_script": "Emphasize: Lead (0.88), Mercury (0.72), Arsenic (0.65) all above 0.50 threshold. Model 5 triggers MANDATORY WATER UTILITY SHUTDOWN — the most severe action in our system. Explain ICP-MS mobile lab deployment for on-site trace metal forensics. Ask judges: 'Would a simple pH sensor have detected this? No. Our multi-model approach does.'"
+    }
+  ]
+}

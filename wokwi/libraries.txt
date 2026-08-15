@@ -1,0 +1,4 @@
+# Wokwi Arduino Libraries
+ArduinoJson
+OneWire
+DallasTemperature

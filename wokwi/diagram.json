@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "author": "SIH Water Intelligence Team",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_ph",
+      "top": -240,
+      "left": -260,
+      "attrs": { "label": "[Analog pH Sensor Module] (0-14 pH)" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_turb",
+      "top": -120,
+      "left": -260,
+      "attrs": { "label": "[Turbidity Sensor Module] (0-300 FNU)" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_do",
+      "top": 0,
+      "left": -260,
+      "attrs": { "label": "[Dissolved Oxygen Module] (0-14 mg/L)" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_cond",
+      "top": 120,
+      "left": -260,
+      "attrs": { "label": "[Conductivity Sensor Module] (0-1500 uS/cm)" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_nutr",
+      "top": -240,
+      "left": 230,
+      "attrs": { "label": "[Sensor Interface Proxy] Electrochemical Nutrient (NO3/PO4)" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_bio",
+      "top": -120,
+      "left": 230,
+      "attrs": { "label": "[Sensor Interface Proxy] Optical Fluorometer (Chl-a/fDOM)" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 0,
+      "left": 240,
+      "attrs": { "color": "green", "label": "[Scenario Selector] Demo Modes (0-4)" }
+    },
+    {
+      "type": "wokwi-ds18b20",
+      "id": "temp1",
+      "top": 80,
+      "left": 230,
+      "attrs": { "label": "[Temperature Sensor Probe] DS18B20 1-Wire" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 150,
+      "left": 240,
+      "attrs": { "value": "4700" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_green",
+      "top": 220,
+      "left": -120,
+      "attrs": { "color": "green", "label": "SAFE Status LED" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_yellow",
+      "top": 220,
+      "left": -40,
+      "attrs": { "color": "yellow", "label": "WARNING Status LED" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_red",
+      "top": 220,
+      "left": 40,
+      "attrs": { "color": "red", "label": "CRITICAL Status LED" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_g",
+      "top": 270,
+      "left": -120,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_y",
+      "top": 270,
+      "left": -40,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_r",
+      "top": 270,
+      "left": 40,
+      "attrs": { "value": "220" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.1", "pot_ph:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "pot_ph:VCC", "red", [ "v0" ] ],
+    [ "esp:D34", "pot_ph:SIG", "green", [ "v0" ] ],
+    [ "esp:GND.1", "pot_turb:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "pot_turb:VCC", "red", [ "v0" ] ],
+    [ "esp:D35", "pot_turb:SIG", "orange", [ "v0" ] ],
+    [ "esp:GND.1", "pot_do:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "pot_do:VCC", "red", [ "v0" ] ],
+    [ "esp:D32", "pot_do:SIG", "blue", [ "v0" ] ],
+    [ "esp:GND.1", "pot_cond:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "pot_cond:VCC", "red", [ "v0" ] ],
+    [ "esp:D33", "pot_cond:SIG", "purple", [ "v0" ] ],
+    [ "esp:GND.2", "pot_nutr:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "pot_nutr:VCC", "red", [ "v0" ] ],
+    [ "esp:VN", "pot_nutr:SIG", "yellow", [ "v0" ] ],
+    [ "esp:GND.2", "pot_bio:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "pot_bio:VCC", "red", [ "v0" ] ],
+    [ "esp:VP", "pot_bio:SIG", "magenta", [ "v0" ] ],
+    [ "esp:GND.2", "btn1:2.1", "black", [ "v0" ] ],
+    [ "esp:D13", "btn1:1.1", "green", [ "v0" ] ],
+    [ "esp:GND.2", "temp1:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "temp1:VDD", "red", [ "v0" ] ],
+    [ "esp:D4", "temp1:DQ", "cyan", [ "v0" ] ],
+    [ "temp1:DQ", "r1:1", "cyan", [ "v0" ] ],
+    [ "temp1:VDD", "r1:2", "red", [ "v0" ] ],
+    [ "esp:D18", "led_green:A", "green", [ "v0" ] ],
+    [ "led_green:C", "r_g:1", "black", [ "v0" ] ],
+    [ "r_g:2", "esp:GND.1", "black", [ "v0" ] ],
+    [ "esp:D19", "led_yellow:A", "gold", [ "v0" ] ],
+    [ "led_yellow:C", "r_y:1", "black", [ "v0" ] ],
+    [ "r_y:2", "esp:GND.1", "black", [ "v0" ] ],
+    [ "esp:D21", "led_red:A", "red", [ "v0" ] ],
+    [ "led_red:C", "r_r:1", "black", [ "v0" ] ],
+    [ "r_r:2", "esp:GND.1", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}

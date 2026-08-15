@@ -1,0 +1,253 @@
+{
+  "version": "5.1.0",
+  "knowledge_domain": "EPA & USGS Hydro-Ecological Expert Decision Rules",
+  "disclaimer": "The system provides AI-assisted decision support and risk indicators, not forensic proof.",
+  "incident_types": {
+    "HYPOXIA": {
+      "name": "Severe Hypoxia & Dissolved Oxygen Depletion",
+      "category": "Dissolved Oxygen Depletion",
+      "triggers": {
+        "dissolved_oxygen_max": 4.0,
+        "critical_dissolved_oxygen": 2.0
+      },
+      "default_severity": "CRITICAL",
+      "root_causes": [
+        "Possible elevated microbial biochemical oxygen demand (BOD) from organic decay.",
+        "Potential thermal stratification restricting atmospheric re-aeration.",
+        "Possible post-bloom algal respiration collapse and biological oxygen uptake."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "Deploy emergency mechanical aeration diffusers in affected river reaches / water body.",
+          "Issue immediate advisory to local aquaculture and fisheries authorities.",
+          "Restrict industrial and wastewater thermal effluent discharges."
+        ],
+        "short_term": [
+          "Increase continuous multiparameter sonde telemetry sampling frequency to 5-minute intervals.",
+          "Conduct upstream tributary spatial transect sampling to investigate organic load sources."
+        ],
+        "long_term": [
+          "Establish riparian vegetative buffer zones to mitigate thermal warming.",
+          "Implement catchment-wide Total Maximum Daily Load (TMDL) restrictions on organic discharge."
+        ]
+      }
+    },
+    "EUTROPHICATION": {
+      "name": "Eutrophication & Nutrient Hyper-Enrichment Risk",
+      "category": "Nutrient Pollution",
+      "triggers": {
+        "nitrate_min": 10.0,
+        "phosphate_min": 0.10,
+        "chlorophyll_min": 25.0
+      },
+      "default_severity": "HIGH",
+      "root_causes": [
+        "Possible agricultural synthetic fertilizer runoff (elevated nitrates or orthophosphates).",
+        "Potential municipal wastewater overflow or septic system infiltration.",
+        "Possible internal benthic sediment phosphorus release under warm, low-oxygen conditions."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "Isolate raw municipal drinking water intakes to prevent cyanotoxin ingress.",
+          "Collect laboratory grab samples for microcystin and cyanobacteria cell density screening.",
+          "Activate chemical dosing pre-treatment (flocculation / PAC) if intake remains open."
+        ],
+        "short_term": [
+          "Inspect agricultural drainage outlets and storm runoff channels within 5 km upstream.",
+          "Deploy drone / satellite remote sensing to track algal bloom chlorophyll-a spatial extent."
+        ],
+        "long_term": [
+          "Mandate precision nutrient management and cover crop adoption across upstream farms.",
+          "Upgrade regional municipal wastewater treatment plants to advanced biological nutrient removal (BNR)."
+        ]
+      }
+    },
+    "SEDIMENT_CONTAMINATION": {
+      "name": "Sediment Shock & Particulate Loading",
+      "category": "Physical & Suspended Solids",
+      "triggers": {
+        "turbidity_min": 50.0,
+        "suspended_sediment_min": 150.0
+      },
+      "default_severity": "HIGH",
+      "root_causes": [
+        "Storm-driven overland soil erosion or high-energy surface runoff.",
+        "Possible construction clearing or riparian disturbance without adequate silt containment.",
+        "Potential upstream riverbank collapse or channel scouring activities."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "Activate coagulant and flocculant dosing at drinking water treatment filtration units.",
+          "Temporarily bypass water supply reservoir raw intakes if sediment load exceeds plant capacity.",
+          "Issue river navigation / dredging advisory due to severe light attenuation."
+        ],
+        "short_term": [
+          "Inspect active civil engineering and construction sites along riverbanks for silt containment compliance.",
+          "Monitor river downstream sedimentation zones for potential benthic habitat smothering."
+        ],
+        "long_term": [
+          "Construct catchment sediment retention basins and bio-retention swales.",
+          "Implement bio-engineered streambank stabilization and native revegetation programs."
+        ]
+      }
+    },
+    "ACIDIFICATION": {
+      "name": "Severe Acidification / Chemical Influx Risk",
+      "category": "Chemical Toxicity",
+      "triggers": {
+        "ph_max": 6.0,
+        "critical_ph_max": 4.5
+      },
+      "default_severity": "CRITICAL",
+      "root_causes": [
+        "Possible unauthorized industrial acid discharge or chemical waste influx.",
+        "Potential Acid Mine Drainage (AMD) containing dissolved sulfide mineral oxidation products.",
+        "Potential localized acidic runoff over poorly-buffered catchment geology."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "TRIGGER IMMEDIATE WATER INTAKE SHUTDOWN: Do not draw raw water into distribution network.",
+          "Dispatch HazMat environmental enforcement team with lime / alkaline neutralizing agents.",
+          "Notify downstream municipalities and public health agencies of potential chemical plume."
+        ],
+        "short_term": [
+          "Conduct trace metal screening (pH < 4.5 leaches aluminum, lead, and zinc into ionic solution).",
+          "Trace pipeline networks and industrial stormwater outfalls using conductance triangulation."
+        ],
+        "long_term": [
+          "Construct passive limestone neutralization drains and constructed wetlands for mine drainages.",
+          "Enforce zero liquid discharge (ZLD) regulations and continuous pH gate locks on industrial outfalls."
+        ]
+      }
+    },
+    "ALKALINE_SPILL": {
+      "name": "Caustic Influx / Severe Alkalinization Risk",
+      "category": "Chemical Toxicity",
+      "triggers": {
+        "ph_min": 9.0,
+        "critical_ph_min": 9.8
+      },
+      "default_severity": "CRITICAL",
+      "root_causes": [
+        "Possible caustic soda (NaOH) industrial wash-down or chemical manufacturing effluent.",
+        "Potential concrete washout runoff from active construction or bridge work.",
+        "Possible alkaline agricultural or industrial soil amendment runoff."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "Close drinking water intake sluices to prevent caustic damage to filtration membranes.",
+          "Deploy carbon dioxide bubbling / acid dosing containment if isolated in retention impoundment."
+        ],
+        "short_term": [
+          "Inspect all concrete mixing and construction outfalls within 10 km upstream."
+        ],
+        "long_term": [
+          "Install automated pH cutoff valves at all industrial concrete manufacturing facilities."
+        ]
+      }
+    },
+    "TOXIC_CONTAMINATION": {
+      "name": "Toxic Contamination Risk (Inferred from Proxies)",
+      "category": "Toxicology & Chemical Hazards",
+      "triggers": {
+        "lead_risk_min": 0.50,
+        "mercury_risk_min": 0.50,
+        "arsenic_risk_min": 0.50,
+        "bioassay_stress_max": 40.0
+      },
+      "default_severity": "CRITICAL",
+      "root_causes": [
+        "Possible electroplating, tannery, or metallurgical industrial discharge inferred from proxy indicators.",
+        "Potential legacy mining tailings seepage or hazardous waste leachate.",
+        "Possible corrosive distribution infrastructure leaching into source tributary."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "MANDATORY WATER UTILITY SHUTDOWN: Cease all drinking water extraction immediately.",
+          "Issue public boil-water / alternative drinking water supply emergency notice.",
+          "Deploy mobile Inductively Coupled Plasma Mass Spectrometry (ICP-MS) mobile lab."
+        ],
+        "short_term": [
+          "Execute upstream industrial audit and trace metal mass balance modeling.",
+          "Perform acute bioassay toxicity testing with Ceriodaphnia dubia and Hyalella azteca."
+        ],
+        "long_term": [
+          "Install granular activated carbon (GAC) and ion-exchange polishing at municipal intake plants.",
+          "Implement strict industrial wastewater pretreatment compliance under EPA Clean Water Act."
+        ]
+      }
+    },
+    "THERMAL_STRESS": {
+      "name": "Elevated Thermal Stress & Heat Pollution",
+      "category": "Physical Temperature",
+      "triggers": {
+        "temperature_min": 28.0
+      },
+      "default_severity": "MEDIUM",
+      "root_causes": [
+        "Possible thermoelectric power plant or industrial cooling water discharge.",
+        "Potential meteorological heat wave combined with reduced riparian canopy shade.",
+        "Low stream baseflow with high solar irradiance."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "Request power plant cooling discharge curtailment or cooling tower recirculation.",
+          "Increase upstream dam cold-water hypolimnetic reservoir release if available."
+        ],
+        "short_term": [
+          "Monitor cold-water stenothermal fish species (trout, salmon) for thermal stress avoidance behavior."
+        ],
+        "long_term": [
+          "Reforest riparian buffer strips to provide natural stream canopy shade."
+        ]
+      }
+    },
+    "ECOSYSTEM_COLLAPSE": {
+      "name": "Biological Ecosystem Health Collapse",
+      "category": "Ecological Stress",
+      "triggers": {
+        "eco_health_index_max": 45.0,
+        "bio_score_max": 40.0
+      },
+      "default_severity": "CRITICAL",
+      "root_causes": [
+        "Possible multi-pollutant cumulative stress exceeding biological carrying capacity.",
+        "Potential acute ecotoxicity indicated by bioassay organism mortality.",
+        "Severe structural loss of macroinvertebrate biodiversity and trophic imbalance."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "Declare river reach as ecologically degraded under biological criteria provisions.",
+          "Conduct emergency toxicity identification evaluation (TIE) to isolate offending chemical agents."
+        ],
+        "short_term": [
+          "Perform comprehensive benthic macroinvertebrate multi-metric bioassessment (EPT index)."
+        ],
+        "long_term": [
+          "Establish multi-year ecological catchment restoration and habitat rehabilitation masterplan."
+        ]
+      }
+    },
+    "NOMINAL_BASELINE": {
+      "name": "Pristine Baseline / Nominal Water Quality",
+      "category": "Nominal",
+      "triggers": {},
+      "default_severity": "LOW",
+      "root_causes": [
+        "Stable hydrological baseflow with balanced ecological and chemical indicators."
+      ],
+      "recommended_actions": {
+        "immediate": [
+          "Maintain standard operational drinking water intake protocol.",
+          "Continue routine automated 15-minute telemetry streaming."
+        ],
+        "short_term": [
+          "Log verified baseline values to catchment seasonal reference database."
+        ],
+        "long_term": [
+          "Maintain watershed conservation and anti-degradation management practices."
+        ]
+      }
+    }
+  }
+}

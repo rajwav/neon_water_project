@@ -1,0 +1,18 @@
+{
+  "model_name": "Model 1 Water Quality Anomaly Detector",
+  "model_version": "v2.0",
+  "algorithm": "IsolationForest",
+  "contamination": 0.05,
+  "features": [
+    "ph",
+    "dissolved_oxygen",
+    "turbidity",
+    "specific_conductance",
+    "fdom"
+  ],
+  "train_records": 80000,
+  "test_records": 20000,
+  "train_anomaly_percentage": 5.0,
+  "test_anomaly_percentage": 11.76,
+  "trained_at": "2026-08-15T08:48:29.982395+00:00"
+}
