@@ -9,7 +9,7 @@ __pycache__/
 # OS files
 .DS_Store
 
-# Matplotlib
+# Matplotlib cache
 .matplotlib_cache/
 
 # Runtime databases
@@ -20,7 +20,7 @@ __pycache__/
 # Generated telemetry
 data/telemetry_history.db
 
-# Large raw datasets
+# Large datasets
 data/raw/
 *.csv
 *.parquet
@@ -29,9 +29,4 @@ data/raw/
 results/
 
 # Temporary files
-*.log.venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-.DS_Store
-.matplotlib_cache/
+*.log
