@@ -1,4 +1,35 @@
+# Python environment
 .venv/
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS files
+.DS_Store
+
+# Matplotlib
+.matplotlib_cache/
+
+# Runtime databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated telemetry
+data/telemetry_history.db
+
+# Large raw datasets
+data/raw/
+*.csv
+*.parquet
+
+# Generated outputs
+results/
+
+# Temporary files
+*.log.venv/
 __pycache__/
 *.pyc
 .pytest_cache/
