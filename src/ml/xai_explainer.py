@@ -39,6 +39,8 @@ FEATURE_LABELS = {
     "ssc_to_turbidity_ratio": "SSC:Turbidity Ratio",
     "bio_taxa_richness": "Biological Taxa Richness",
     "biological_sampled_flag": "Biological Sampling Flag",
+    "heavy_metal_risk": "Heavy Metal Risk Proxy",
+    "microbial_risk": "Microbial Risk Proxy",
 }
 
 # EPA safe baseline reference values for direction interpretation
@@ -53,6 +55,8 @@ EPA_BASELINES = {
     "total_phosphorus_est_mg_l": (0.0, 0.05),
     "n_to_p_ratio": (4.0, 30.0),
     "ssc_to_turbidity_ratio": (0.0, 10.0),
+    "heavy_metal_risk": (0.0, 0.10),
+    "microbial_risk": (0.0, 10.0),
 }
 
 
@@ -182,6 +186,8 @@ class SHAPExplainer:
         ssc_to_turbidity_ratio: Optional[float] = None,
         bio_taxa_richness: int = 0,
         biological_sampled: int = 0,
+        heavy_metal_risk: Optional[float] = None,
+        microbial_risk: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Generate SHAP-based explanation for Model 2 risk classification prediction.
@@ -206,16 +212,16 @@ class SHAPExplainer:
 
         # Build sample DataFrame matching training feature order
         sample_dict = {
-            "ph": ph,
+            "ph": ph if ph is not None else 7.4,
             "temperature_c": temperature if temperature is not None else 20.0,
-            "specific_conductance_us_cm": specific_conductance,
-            "turbidity_fnu": turbidity,
-            "dissolved_oxygen_mg_l": dissolved_oxygen,
-            "suspended_sediment_conc_mg_l": suspended_sediment,
-            "total_nitrogen_est_mg_l": total_nitrogen,
-            "total_phosphorus_est_mg_l": total_phosphorus,
-            "n_to_p_ratio": n_to_p_ratio,
-            "ssc_to_turbidity_ratio": ssc_to_turbidity_ratio,
+            "specific_conductance_us_cm": specific_conductance if specific_conductance is not None else 280.0,
+            "turbidity_fnu": turbidity if turbidity is not None else 4.5,
+            "dissolved_oxygen_mg_l": dissolved_oxygen if dissolved_oxygen is not None else 8.5,
+            "suspended_sediment_conc_mg_l": suspended_sediment if suspended_sediment is not None else 35.0,
+            "total_nitrogen_est_mg_l": total_nitrogen if total_nitrogen is not None else 0.45,
+            "total_phosphorus_est_mg_l": total_phosphorus if total_phosphorus is not None else 0.015,
+            "n_to_p_ratio": n_to_p_ratio if n_to_p_ratio is not None else 30.0,
+            "ssc_to_turbidity_ratio": ssc_to_turbidity_ratio if ssc_to_turbidity_ratio is not None else 7.0,
             "bio_taxa_richness": bio_taxa_richness,
             "biological_sampled_flag": biological_sampled,
         }
@@ -238,13 +244,12 @@ class SHAPExplainer:
         for i, feat_name in enumerate(self.feature_names):
             raw_val = sample_dict.get(feat_name)
             impact_val = float(contributions[i])
-            abs_impact = abs(impact_val)
 
-            # Determine direction
+            # Direction classification
             if predicted_class == "SAFE":
-                direction = "decrease risk" if impact_val > 0.005 else ("increase risk" if impact_val < -0.005 else "neutral")
+                direction = "risk_decreasing" if impact_val > 0.005 else ("risk_increasing" if impact_val < -0.005 else "neutral")
             else:
-                direction = "increase risk" if impact_val > 0.005 else ("decrease risk" if impact_val < -0.005 else "neutral")
+                direction = "risk_increasing" if impact_val > 0.005 else ("risk_decreasing" if impact_val < -0.005 else "neutral")
 
             # Determine if value is outside safe baseline
             baseline = EPA_BASELINES.get(feat_name)
@@ -252,11 +257,15 @@ class SHAPExplainer:
             if baseline and raw_val is not None:
                 low, high = baseline
                 if raw_val < low:
-                    value_assessment = f"below safe range ({low})"
+                    value_assessment = f"below safe baseline ({low})"
+                    if predicted_class in ["CRITICAL", "WARNING"]:
+                        direction = "risk_increasing"
                 elif raw_val > high:
-                    value_assessment = f"above safe range ({high})"
+                    value_assessment = f"above safe baseline ({high})"
+                    if predicted_class in ["CRITICAL", "WARNING"]:
+                        direction = "risk_increasing"
                 else:
-                    value_assessment = "within safe range"
+                    value_assessment = "within safe baseline"
 
             formatted_val = str(round(raw_val, 3)) if raw_val is not None else "N/A"
             human_label = FEATURE_LABELS.get(feat_name, feat_name)
@@ -266,12 +275,42 @@ class SHAPExplainer:
                 "label": human_label,
                 "value": formatted_val,
                 "raw_value": round(raw_val, 4) if raw_val is not None else None,
+                "shap_value": round(impact_val, 4),
                 "impact": round(impact_val, 4),
-                "abs_impact": round(abs_impact, 4),
+                "abs_impact": round(abs(impact_val), 4),
                 "direction": direction,
                 "value_assessment": value_assessment,
             }
             feature_contribs.append(fc_item)
+
+        # Ingest Heavy Metal & Microbial contamination proxies if present
+        if heavy_metal_risk is not None and heavy_metal_risk > 0.30:
+            hm_impact = round(0.45 * float(heavy_metal_risk), 4)
+            feature_contribs.append({
+                "feature": "heavy_metal_risk",
+                "label": "Heavy Metal Risk Index",
+                "value": str(round(heavy_metal_risk, 3)),
+                "raw_value": round(heavy_metal_risk, 4),
+                "shap_value": hm_impact,
+                "impact": hm_impact,
+                "abs_impact": hm_impact,
+                "direction": "risk_increasing",
+                "value_assessment": "acute toxic threshold exceeded (>0.30)",
+            })
+
+        if microbial_risk is not None and microbial_risk > 20.0:
+            mb_impact = round(0.35 * (float(microbial_risk) / 100.0), 4)
+            feature_contribs.append({
+                "feature": "microbial_risk",
+                "label": "Microbial Risk Index",
+                "value": str(round(microbial_risk, 1)),
+                "raw_value": round(microbial_risk, 2),
+                "shap_value": mb_impact,
+                "impact": mb_impact,
+                "abs_impact": mb_impact,
+                "direction": "risk_increasing",
+                "value_assessment": "pathogenic loading elevated (>20%)",
+            })
 
         # Sort by absolute impact descending
         feature_contribs.sort(key=lambda x: x["abs_impact"], reverse=True)
@@ -280,27 +319,28 @@ class SHAPExplainer:
             top_features_list.append({
                 "feature": fc["label"],
                 "value": fc["value"],
+                "shap_value": fc["shap_value"],
                 "impact": f"{fc['impact']:+.4f}",
                 "direction": fc["direction"],
             })
 
         # Generate natural language prediction reason
-        top_positive = [fc for fc in feature_contribs if fc["abs_impact"] > 0.01][:3]
+        top_drivers = [fc for fc in feature_contribs if fc["abs_impact"] > 0.01][:3]
         if predicted_class == "SAFE":
-            if top_positive:
-                drivers_str = ", ".join(f"{fc['label']} ({fc['value']})" for fc in top_positive)
-                prediction_reason = f"Safe condition confirmed mainly due to healthy baseline across {drivers_str}."
+            if top_drivers:
+                drivers_str = ", ".join(f"{fc['label']} ({fc['value']})" for fc in top_drivers)
+                prediction_reason = f"Safe condition confirmed mainly due to compliant baseline across {drivers_str}."
             else:
                 prediction_reason = "Safe condition confirmed: all physical-chemical parameters remain within standard ecological baselines."
         elif predicted_class == "CRITICAL":
-            critical_drivers = [fc for fc in top_positive if "increase" in fc["direction"] or fc["value_assessment"] != "within safe range"]
+            critical_drivers = [fc for fc in top_drivers if fc["direction"] == "risk_increasing"]
             if critical_drivers:
                 drivers_str = " and ".join(f"{fc['label'].lower()} ({fc['value']})" for fc in critical_drivers[:2])
                 prediction_reason = f"Critical risk mainly caused by abnormal {drivers_str}."
             else:
                 prediction_reason = "Critical risk triggered by multi-parameter threshold degradation."
         else:  # WARNING
-            warn_drivers = [fc for fc in top_positive if "increase" in fc["direction"]]
+            warn_drivers = [fc for fc in top_drivers if fc["direction"] == "risk_increasing"]
             if warn_drivers:
                 drivers_str = " and ".join(f"{fc['label'].lower()} ({fc['value']})" for fc in warn_drivers[:2])
                 prediction_reason = f"Warning status driven by elevated {drivers_str}."

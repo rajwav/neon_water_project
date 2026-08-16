@@ -145,10 +145,12 @@ class FeatureContributionItem(BaseModel):
     label: Optional[str] = Field(None, description="Human readable label")
     value: Optional[str] = Field(None, description="Current value string")
     raw_value: Optional[float] = Field(None, description="Current numeric value")
+    shap_value: Optional[float] = Field(None, description="SHAP feature attribution value")
     impact: Any = Field(..., description="SHAP contribution value or formatted string")
     abs_impact: Optional[float] = Field(None, description="Absolute SHAP contribution")
-    direction: str = Field(..., description="Direction: increase risk / decrease risk / neutral")
+    direction: str = Field(..., description="Direction: risk_increasing / risk_decreasing / neutral")
     value_assessment: Optional[str] = Field(None, description="Ecological baseline assessment")
+
 
 
 class XAIExplanationBlock(BaseModel):
@@ -267,3 +269,65 @@ def predict(request: PredictionRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
+
+
+# ── IoT Telemetry & MQTT Endpoints ─────────────────────────────────
+
+@app.get("/telemetry/live")
+def get_live_telemetry():
+    """
+    Fetch the latest validated in-situ telemetry stream from Hirakud Node #001,
+    connection health metrics, and real-time AI diagnostic synthesis.
+    """
+    try:
+        from iot.mqtt_client import telemetry_manager
+        telemetry_manager.set_ai_engine(engine)
+        status_data = telemetry_manager.get_connection_status()
+        return status_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Telemetry retrieval error: {str(e)}")
+
+
+@app.get("/telemetry/status")
+def get_telemetry_status():
+    """
+    Get live sensor connection health (🟢 Connected, 🟡 SENSOR DELAY, 🔴 SENSOR OFFLINE).
+    """
+    try:
+        from iot.mqtt_client import telemetry_manager
+        return telemetry_manager.get_connection_status()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Telemetry status error: {str(e)}")
+
+
+@app.post("/telemetry/publish")
+def publish_telemetry_packet(packet: Dict[str, Any]):
+    """
+    Ingest a telemetry packet (from virtual sensor simulator, external MQTT bridge, or hardware gateway).
+    """
+    try:
+        from iot.mqtt_client import telemetry_manager
+        telemetry_manager.set_ai_engine(engine)
+        success, msg = telemetry_manager.ingest_packet(packet)
+        if not success:
+            raise HTTPException(status_code=400, detail=msg)
+        return {"status": "success", "message": msg, "node_id": packet.get("node_id", "UNKNOWN")}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Telemetry publication error: {str(e)}")
+
+
+@app.get("/telemetry/history")
+def get_telemetry_history(limit: int = 50):
+    """
+    Fetch recent telemetry packets and AI inference outcomes from persistent SQLite store.
+    """
+    try:
+        from iot.mqtt_client import telemetry_manager
+        records = telemetry_manager.get_history(limit=limit)
+        return {"total_records": len(records), "history": records}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Telemetry history retrieval error: {str(e)}")
+
+

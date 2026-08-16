@@ -1,0 +1,314 @@
+{
+  "version": "3.0.0",
+  "generated_at": "2026-08-16T04:33:00Z",
+  "platform": "NEON Water Intelligence National Deployment Framework",
+  "summary": {
+    "active_operational_nodes": 1,
+    "proposed_expansion_basins": 6,
+    "national_telemetry_uptime_pct": 99.8,
+    "framework_status": "PILOT_OPERATIONAL"
+  },
+  "active_node": {
+    "node_id": "MAHA_HIRAKUD_001",
+    "name": "Hirakud Reservoir Digital Twin Node",
+    "type": "ACTIVE",
+    "status": "ACTIVE OPERATIONAL NODE",
+    "sensor_status": "CONNECTED & LIVE STREAMING",
+    "ai_status": "ALL 5 AI MODELS ACTIVE",
+    "basin": "Mahanadi Basin",
+    "river": "Mahanadi River",
+    "state": "Odisha",
+    "city": "Sambalpur",
+    "coordinates": [83.872, 21.534],
+    "latitude": 21.534,
+    "longitude": 83.872,
+    "color_code": "#EF4444",
+    "sampling_interval_sec": 15,
+    "current_telemetry": {
+      "ph": 7.42,
+      "dissolved_oxygen_mg_l": 8.65,
+      "turbidity_fnu": 4.5,
+      "conductivity_us_cm": 280,
+      "temperature_c": 21.3,
+      "nutrients_nitrate_mg_l": 1.2,
+      "nutrients_phosphate_mg_l": 0.08,
+      "heavy_metals_ppm": 0.002
+    },
+    "sensors_active": [
+      "✓ pH Sonde",
+      "✓ Optical Dissolved Oxygen",
+      "✓ Turbidity (FNU)",
+      "✓ Specific Conductance (µS/cm)",
+      "✓ Water Temperature (°C)",
+      "✓ Nutrients (Nitrate & Phosphate ISE)",
+      "✓ Heavy Metals (Lead/Cadmium Micro-Sensor)"
+    ],
+    "ai_models_active": [
+      "✓ Model 1: Multivariate Anomaly Detection (Isolation Forest)",
+      "✓ Model 2: Contamination Risk Classifier (Balanced RF + TreeSHAP)",
+      "✓ Model 3: Biological Ecosystem Health Engine (Bioassay Stress)",
+      "✓ Model 4: 24-Hour Predictive Early Warning Forecaster",
+      "✓ Model 5: Neuro-Symbolic Decision Support & Action Engine"
+    ],
+    "reach_topology": {
+      "reach_name": "Hirakud Dam Inflow & Spillway Reach",
+      "stream_order": 7,
+      "catchment_area_sqkm": 141600,
+      "flow_velocity_mps": 1.8,
+      "flow_velocity_kmh": 6.48,
+      "real_river_path": [
+        [83.600, 21.650],
+        [83.750, 21.600],
+        [83.872, 21.534],
+        [83.920, 21.480],
+        [83.968, 21.467],
+        [83.930, 21.410],
+        [83.910, 21.350],
+        [84.150, 21.320],
+        [84.500, 21.150],
+        [85.870, 20.460]
+      ],
+      "downstream_exposed_assets": [
+        {
+          "asset_id": "SAMBALPUR_INTAKE_01",
+          "name": "Sambalpur Municipal Raw Water Intake #1",
+          "type": "DRINKING_WATER",
+          "coordinates": [83.968, 21.467],
+          "distance_km": 4.8,
+          "population_served": 340000,
+          "vulnerability_tier": "CRITICAL_MUNICIPAL",
+          "recommended_action": "TRIGGER RAW WATER INTAKE ISOLATION GATE",
+          "contingency_source": "Auxiliary Borewell Grid #3"
+        },
+        {
+          "asset_id": "BARGARH_CANAL_01",
+          "name": "Bargarh Main Irrigation Canal Gate",
+          "type": "IRRIGATION",
+          "coordinates": [83.930, 21.410],
+          "distance_km": 11.2,
+          "population_served": 180000,
+          "crop_hectares": 85000,
+          "vulnerability_tier": "HIGH_AGRICULTURAL",
+          "recommended_action": "CLOSE CANAL SLUICE GATES TO PREVENT PADDY SOIL SALINIZATION",
+          "contingency_source": "Catchment Sump Buffer"
+        },
+        {
+          "asset_id": "CHIPLIMA_HYDRO_01",
+          "name": "Chiplima Powerhouse & Industrial Intake",
+          "type": "INDUSTRIAL_HYDRO",
+          "coordinates": [83.910, 21.350],
+          "distance_km": 15.6,
+          "capacity_mw": 72,
+          "population_served": 45000,
+          "vulnerability_tier": "MEDIUM_INFRASTRUCTURE",
+          "recommended_action": "DIVERT PLUME THROUGH SPILLWAY BYPASS & RE-ROUTE COOLING INTAKE",
+          "contingency_source": "Cooling Recirculation"
+        },
+        {
+          "asset_id": "HIRAKUD_FISHERY_01",
+          "name": "Hirakud Protected Inland Fishery Reach",
+          "type": "AQUATIC_HABITAT",
+          "coordinates": [83.890, 21.510],
+          "distance_km": 16.0,
+          "status": "VULNERABLE",
+          "vulnerability_tier": "HIGH_ECOLOGICAL",
+          "recommended_action": "DEPLOY EMERGENCY MECHANICAL AERATION DIFFUSERS",
+          "contingency_source": "Ecosystem Spawning Zone"
+        },
+        {
+          "asset_id": "CUTTACK_DELTA_01",
+          "name": "Cuttack Delta Municipal Abstraction Intake",
+          "type": "DRINKING_WATER",
+          "coordinates": [85.870, 20.460],
+          "distance_km": 240.0,
+          "population_served": 850000,
+          "vulnerability_tier": "DOWNSTREAM_URBAN",
+          "recommended_action": "ISSUE 36-HOUR EARLY WARNING ADVISORY TO CPCB/DELTA AUTHORITIES",
+          "contingency_source": "Mahanadi Delta Borewell Reserve"
+        }
+      ]
+    }
+  },
+  "proposed_expansion_zones": [
+    {
+      "node_id": "PROP_GANGA_001",
+      "name": "Ganga River Monitoring Zone",
+      "location_name": "Kanpur Industrial Reach",
+      "basin": "Ganga Basin",
+      "river": "Ganga River",
+      "city": "Kanpur",
+      "state": "Uttar Pradesh",
+      "coordinates": [80.3319, 26.4499],
+      "latitude": 26.4499,
+      "longitude": 80.3319,
+      "type": "PROPOSED",
+      "deployment_status": "PROPOSED",
+      "color_code": "#F59E0B",
+      "priority": "HIGH (Critical Industrial Reach)",
+      "reason": [
+        "Industrial contamination risk from tannery & chemical discharge clusters",
+        "High population dependency (3,200,000 downstream municipal users)",
+        "Ecological importance for Ganges River Dolphin conservation reach"
+      ],
+      "recommended_sensors": [
+        "✓ pH Sonde",
+        "✓ Optical DO",
+        "✓ Turbidity FNU",
+        "✓ Conductivity Cell",
+        "✓ Temperature Thermistor",
+        "✓ Heavy Metals (Chromium, Lead, Cadmium)"
+      ],
+      "catchment_area_sqkm": 861452
+    },
+    {
+      "node_id": "PROP_YAMUNA_001",
+      "name": "Yamuna River Monitoring Zone",
+      "location_name": "Delhi Wazirabad-Okhla",
+      "basin": "Yamuna Basin",
+      "river": "Yamuna River",
+      "city": "Delhi",
+      "state": "Delhi NCR",
+      "coordinates": [77.2090, 28.6139],
+      "latitude": 28.6139,
+      "longitude": 77.2090,
+      "type": "PROPOSED",
+      "deployment_status": "PROPOSED",
+      "color_code": "#F59E0B",
+      "priority": "HIGH (Capital City Lifeline)",
+      "reason": [
+        "Acute urban organic loading and seasonal toxic surfactant foam events",
+        "Critical municipal drinking water abstraction reach for 19,000,000 citizens",
+        "Okhla Bird Sanctuary and Yamuna floodplain ecological zone"
+      ],
+      "recommended_sensors": [
+        "✓ pH Sonde",
+        "✓ Optical DO",
+        "✓ Turbidity FNU",
+        "✓ Conductivity Cell",
+        "✓ Temperature Thermistor",
+        "✓ Heavy Metals & Ammoniacal Nitrogen"
+      ],
+      "catchment_area_sqkm": 366223
+    },
+    {
+      "node_id": "PROP_GODAVARI_001",
+      "name": "Godavari River Monitoring Zone",
+      "location_name": "Rajahmundry Barrage",
+      "basin": "Godavari Basin",
+      "river": "Godavari River",
+      "city": "Rajahmundry",
+      "state": "Andhra Pradesh",
+      "coordinates": [81.7800, 16.9800],
+      "latitude": 16.9800,
+      "longitude": 81.7800,
+      "type": "PROPOSED",
+      "deployment_status": "PROPOSED",
+      "color_code": "#F59E0B",
+      "priority": "HIGH (Delta Aquaculture Security)",
+      "reason": [
+        "Agricultural drainage pesticide and aquaculture nutrient eutrophication",
+        "1,850,000 deltaic residents & agrarian irrigation network dependency",
+        "Coringa Mangrove Delta and estuarine turtle habitat"
+      ],
+      "recommended_sensors": [
+        "✓ pH Sonde",
+        "✓ Optical DO",
+        "✓ Turbidity FNU",
+        "✓ Conductivity Cell",
+        "✓ Temperature Thermistor",
+        "✓ Nitrate & Phosphate ISE"
+      ],
+      "catchment_area_sqkm": 312812
+    },
+    {
+      "node_id": "PROP_KRISHNA_001",
+      "name": "Krishna River Monitoring Zone",
+      "location_name": "Prakasam Barrage Vijayawada",
+      "basin": "Krishna Basin",
+      "river": "Krishna River",
+      "city": "Vijayawada",
+      "state": "Andhra Pradesh",
+      "coordinates": [80.6480, 16.5062],
+      "latitude": 16.5062,
+      "longitude": 80.6480,
+      "type": "PROPOSED",
+      "deployment_status": "PROPOSED",
+      "color_code": "#F59E0B",
+      "priority": "HIGH (Agrarian Cascade Security)",
+      "reason": [
+        "Cascade reservoir salinization and urban pharmaceutical industrial loading",
+        "2,400,000 urban and deltaic irrigation beneficiaries",
+        "Krishna estuarine wetlands and brackish breeding grounds"
+      ],
+      "recommended_sensors": [
+        "✓ pH Sonde",
+        "✓ Optical DO",
+        "✓ Turbidity FNU",
+        "✓ Conductivity Cell",
+        "✓ Temperature Thermistor",
+        "✓ Heavy Metals (Lead, Arsenic)"
+      ],
+      "catchment_area_sqkm": 258948
+    },
+    {
+      "node_id": "PROP_NARMADA_001",
+      "name": "Narmada River Monitoring Zone",
+      "location_name": "Jabalpur Catchment",
+      "basin": "Narmada Basin",
+      "river": "Narmada River",
+      "city": "Jabalpur",
+      "state": "Madhya Pradesh",
+      "coordinates": [79.9322, 23.1815],
+      "latitude": 23.1815,
+      "longitude": 79.9322,
+      "type": "PROPOSED",
+      "deployment_status": "PROPOSED",
+      "color_code": "#F59E0B",
+      "priority": "MEDIUM (Pristine Reference Baseline)",
+      "reason": [
+        "Establishment of national pristine baseline water quality envelope",
+        "1,500,000 municipal drinking water users in Jabalpur and downstream towns",
+        "Bhedaghat Marble Rocks gorge ecosystem and endemic mahseer fish sanctuaries"
+      ],
+      "recommended_sensors": [
+        "✓ pH Sonde",
+        "✓ Optical DO",
+        "✓ Turbidity FNU",
+        "✓ Conductivity Cell",
+        "✓ Temperature Thermistor",
+        "✓ Biological Carrying Capacity Sonde"
+      ],
+      "catchment_area_sqkm": 98796
+    },
+    {
+      "node_id": "PROP_CAUVERY_001",
+      "name": "Cauvery River Monitoring Zone",
+      "location_name": "Mettur Dam Reservoir",
+      "basin": "Cauvery Basin",
+      "river": "Cauvery River",
+      "city": "Salem",
+      "state": "Tamil Nadu",
+      "coordinates": [77.8000, 11.8000],
+      "latitude": 11.8000,
+      "longitude": 77.8000,
+      "type": "PROPOSED",
+      "deployment_status": "PROPOSED",
+      "color_code": "#F59E0B",
+      "priority": "HIGH (Inter-State Dispute Mitigation)",
+      "reason": [
+        "Textile dyeing chemical waste and high dissolved solids tracking",
+        "12,000,000 deltaic farmers and municipal consumers",
+        "Cauvery Delta wetland ecosystem and riparian biodiversity habitats"
+      ],
+      "recommended_sensors": [
+        "✓ pH Sonde",
+        "✓ Optical DO",
+        "✓ Turbidity FNU",
+        "✓ Conductivity Cell",
+        "✓ Temperature Thermistor",
+        "✓ Heavy Metals (Azo-Dye & Chromium)"
+      ],
+      "catchment_area_sqkm": 81155
+    }
+  ]
+}

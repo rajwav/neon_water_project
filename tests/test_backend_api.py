@@ -546,4 +546,133 @@ def test_model4_forecast_safety_layer_emergency_override():
     assert "suppressed" in fc["message"].lower() or "exceeds" in fc["message"].lower()
 
 
+# ══════════════════════════════════════════════════════════════════════
+# MODEL 5 DECISION RECOMMENDATION REGRESSION SUITE
+# ══════════════════════════════════════════════════════════════════════
+
+def test_model5_returns_actions_acid_spill():
+    """Verify Model 5 returns immediate, short-term, and long-term actions for acid spill."""
+    payload = {
+        "ph": 2.80,
+        "dissolved_oxygen": 4.50,
+        "turbidity": 48.0,
+        "specific_conductance": 1450.0,
+        "temperature": 24.0,
+        "site_id": "BLUE",
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    dec = data["decision_support"]
+    assert dec["incident_type"] == "ACIDIFICATION"
+    assert dec["severity"] == "CRITICAL"
+
+    actions = dec["recommended_actions"]
+    assert len(actions["immediate_actions"]) >= 2
+    assert any("shutdown" in a.lower() or "intake" in a.lower() for a in actions["immediate_actions"])
+    assert len(actions["short_term_actions"]) >= 1
+    assert len(actions["long_term_prevention"]) >= 1
+
+
+def test_model5_returns_actions_toxic_event():
+    """Verify Model 5 returns immediate, short-term, and long-term actions for heavy metal toxicity."""
+    payload = {
+        "ph": 6.20,
+        "dissolved_oxygen": 7.0,
+        "turbidity": 10.0,
+        "specific_conductance": 900.0,
+        "lead_risk_index": 0.85,
+        "mercury_risk_index": 0.60,
+        "site_id": "BIGC",
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    dec = data["decision_support"]
+    assert dec["incident_type"] == "TOXIC_CONTAMINATION"
+    assert dec["severity"] == "CRITICAL"
+
+    actions = dec["recommended_actions"]
+    assert len(actions["immediate_actions"]) >= 2
+    assert any("shutdown" in a.lower() or "drinking" in a.lower() or "icp-ms" in a.lower() for a in actions["immediate_actions"])
+    assert len(actions["short_term_actions"]) >= 1
+    assert len(actions["long_term_prevention"]) >= 1
+
+
+def test_model5_returns_actions_eutrophication():
+    """Verify Model 5 returns immediate, short-term, and long-term actions for eutrophication."""
+    payload = {
+        "ph": 8.65,
+        "dissolved_oxygen": 2.50,
+        "turbidity": 35.0,
+        "specific_conductance": 600.0,
+        "nitrate_mg_l": 15.0,
+        "phosphate_mg_l": 0.25,
+        "chlorophyll_a_ug_l": 45.0,
+        "site_id": "BARC",
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    dec = data["decision_support"]
+    assert dec["severity"] in ["HIGH", "CRITICAL"]
+
+    actions = dec["recommended_actions"]
+    assert len(actions["immediate_actions"]) >= 1
+    assert len(actions["short_term_actions"]) >= 1
+    assert len(actions["long_term_prevention"]) >= 1
+
+
+def test_model5_returns_actions_normal_case():
+    """Verify Model 5 returns nominal guidance for safe pristine river water."""
+    payload = {
+        "ph": 7.42,
+        "dissolved_oxygen": 8.65,
+        "turbidity": 4.5,
+        "specific_conductance": 280.0,
+        "temperature": 21.3,
+        "site_id": "WOKWI_SITE",
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    dec = data["decision_support"]
+    assert dec["incident_type"] == "NOMINAL_BASELINE"
+    assert dec["severity"] == "LOW"
+
+    actions = dec["recommended_actions"]
+    assert len(actions["immediate_actions"]) >= 1
+    assert any("standard" in a.lower() or "routine" in a.lower() for a in actions["immediate_actions"])
+    assert len(actions["short_term_actions"]) >= 1
+    assert len(actions["long_term_prevention"]) >= 1
+
+
+def test_dashboard_payload_contains_recommendations():
+    """Verify the entire prediction response payload contains complete decision support structures."""
+    payload = {
+        "ph": 7.42,
+        "dissolved_oxygen": 8.65,
+        "turbidity": 4.5,
+        "specific_conductance": 280.0,
+        "temperature": 21.3,
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "decision_support" in data
+    ds = data["decision_support"]
+    assert "incident" in ds
+    assert "severity" in ds
+    assert "confidence" in ds
+    assert "evidence" in ds
+    assert "root_causes" in ds
+    assert "reasoning_chain" in ds
+    assert "recommended_actions" in ds
+    assert "immediate_actions" in ds["recommended_actions"]
+    assert "short_term_actions" in ds["recommended_actions"]
+    assert "long_term_prevention" in ds["recommended_actions"]
+
+
+
 

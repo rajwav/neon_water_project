@@ -84,12 +84,16 @@ class WaterIntelligenceEngine:
         lead_risk: Optional[float] = None,
         mercury_risk: Optional[float] = None,
         arsenic_risk: Optional[float] = None,
+        heavy_metal_risk: Optional[float] = None,
         microbial_risk: Optional[float] = None,
         bio_dominant_taxon: str = "None",
         bio_taxa_richness: int = 0,
         biological_sampled: int = 0,
         recent_history: Optional[List[Dict[str, float]]] = None,
     ) -> Dict[str, Any]:
+        if heavy_metal_risk is not None and lead_risk is None:
+            lead_risk = heavy_metal_risk
+
         """
         Execute full multi-domain prediction pipeline:
           Input -> M1 (Anomaly) -> M2 (Risk) -> M3 (Bio Health) -> M4 (Forecaster) -> M5 (Decision Support) -> Output
@@ -267,6 +271,7 @@ class WaterIntelligenceEngine:
         )
 
         # ── 7. SHAP Explainable AI: Feature Contribution Analysis ──
+        hm_risk = lead_risk or mercury_risk or arsenic_risk
         xai_diag = shap_explainer.explain(
             ph=ph,
             dissolved_oxygen=dissolved_oxygen,
@@ -278,7 +283,10 @@ class WaterIntelligenceEngine:
             total_phosphorus=tp_mg_l,
             bio_taxa_richness=bio_taxa_richness,
             biological_sampled=biological_sampled,
+            heavy_metal_risk=hm_risk,
+            microbial_risk=microbial_risk,
         )
+
 
         # ── 8. Assemble Integrated Multi-Model Response ────────────
         structured_response = {
