@@ -17,7 +17,7 @@
 
 <br/>
 
-<img src="docs/screenshots/dashboard_screen3_ai_models.png" alt="AquaNeon Command Center Hero" width="900" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"/>
+<img src="docs/assets/ai-model-intelligence.png" alt="AquaNeon Command Center Hero" width="900" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"/>
 
 </div>
 
@@ -649,38 +649,62 @@ python -m ast src/automation/workflow_engine.py
 <table align="center" width="100%">
   <tr>
     <td width="50%" align="center">
-      <img src="docs/screenshots/dashboard_screen1_gis.png" alt="Screen 1: National Geospatial Map" width="100%" style="border-radius: 6px;"/>
+      <img src="docs/assets/gis-command-center.png" alt="Screen 1: GIS Command Center" width="100%" style="border-radius: 6px;"/>
       <br/>
-      <b>Screen 1: National Geospatial River Basin Deployment Map</b>
+      <b>Screen 1: National Geospatial River Basin Command Center</b>
     </td>
     <td width="50%" align="center">
-      <img src="docs/screenshots/dashboard_screen2_digital_twin.png" alt="Screen 2: Digital Twin Sandbox" width="100%" style="border-radius: 6px;"/>
+      <img src="docs/assets/incident-simulator.png" alt="Incident Simulator & Mission Runner" width="100%" style="border-radius: 6px;"/>
       <br/>
-      <b>Screen 2: Digital Twin & SCADA Telemetry Control Sandbox</b>
+      <b>Incident Simulator & Mission Runner SCADA Integration</b>
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
-      <img src="docs/screenshots/dashboard_screen3_ai_models.png" alt="Screen 3: AI Intelligence Center" width="100%" style="border-radius: 6px;"/>
+      <img src="docs/assets/ai-model-intelligence.png" alt="AI Model Intelligence Center" width="100%" style="border-radius: 6px;"/>
       <br/>
       <b>Screen 3: Five-Model Intelligence HUD Cards & Diagnostics</b>
     </td>
     <td width="50%" align="center">
-      <img src="docs/screenshots/dashboard_screen3_shap_automation.png" alt="Screen 3: TreeSHAP Waterfall" width="100%" style="border-radius: 6px;"/>
+      <img src="docs/assets/treeshap-explainability.png" alt="TreeSHAP Local Explainability Waterfall" width="100%" style="border-radius: 6px;"/>
       <br/>
-      <b>Screen 3: TreeSHAP Local Attributions & SCADA Console</b>
+      <b>TreeSHAP Local Feature Attribution & Decision Path</b>
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
-      <img src="docs/screenshots/confusion_matrix_v2.png" alt="Model 2 Confusion Matrix" width="100%" style="border-radius: 6px;"/>
+      <img src="docs/assets/scada-automation.png" alt="SCADA Automation & Workflow Execution" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>SCADA Automation Response & n8n-Style Workflow Graph</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/assets/model4-forecast-evaluation.png" alt="Model 4 Early Warning Forecast" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Model 4: 24-Hour Predictive Early Warning Forecast</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/assets/model2-confusion-matrix.png" alt="Model 2 Operational Risk Confusion Matrix" width="100%" style="border-radius: 6px;"/>
       <br/>
       <b>Model 2: Operational Risk Classifier Confusion Matrix</b>
     </td>
     <td width="50%" align="center">
-      <img src="docs/screenshots/anomaly_distribution_v2.png" alt="Model 1 Anomaly Score Distribution" width="100%" style="border-radius: 6px;"/>
+      <img src="docs/assets/model1-anomaly-distribution.png" alt="Model 1 Isolation Forest Anomaly Distribution" width="100%" style="border-radius: 6px;"/>
       <br/>
       <b>Model 1: Isolation Forest Anomaly Score Distribution</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/assets/usgs-correlation-matrix.png" alt="USGS Multi-Parameter Correlation Matrix" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Multi-Parameter Environmental Correlation Matrix</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/assets/usgs-feature-importance.png" alt="USGS Feature Importance Ranking" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Global Random Forest Feature Importance Ranking</b>
     </td>
   </tr>
 </table>
