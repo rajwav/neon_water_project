@@ -13,7 +13,11 @@
 [![Render](https://img.shields.io/badge/Render-Deployed-46E3B7.svg?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 [![pytest](https://img.shields.io/badge/pytest-35%2F35%20Passing-brightgreen.svg?style=flat-square&logo=pytest&logoColor=white)](https://docs.pytest.org/)
 
-[Live Interactive Demo](https://autonex-aqua-neon.onrender.com) • [API Health Endpoint](https://autonex-aqua-neon.onrender.com/_stcore/health) • [Repository](https://github.com/rajwav/neon_water_project)
+[Live Interactive Demo](https://autonex-aqua-neon.onrender.com) • [API Health Endpoint](https://autonex-aqua-neon.onrender.com/_stcore/health) • [GitHub Repository](https://github.com/rajwav/neon_water_project)
+
+<br/>
+
+<img src="docs/screenshots/dashboard_screen3_ai_models.png" alt="AquaNeon Command Center Hero" width="900" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"/>
 
 </div>
 
@@ -23,7 +27,7 @@ AquaNeon is an end-to-end water intelligence and automated response simulation p
 
 ---
 
-## Quick Overview
+## 1. Quick Overview
 
 | Capability | Implementation |
 |---|---|
@@ -44,7 +48,7 @@ AquaNeon is an end-to-end water intelligence and automated response simulation p
 
 ---
 
-## What is AquaNeon?
+## 2. What is AquaNeon?
 
 Modern water treatment plants, municipal water grids, and river monitoring stations continuously generate high-frequency sensor streams (pH, dissolved oxygen, turbidity, conductivity, temperature, nutrients). However, **raw sensor telemetry is difficult to interpret in real time**:
 
@@ -69,7 +73,7 @@ The system does not merely predict water quality; it validates sensor data, expl
 
 ---
 
-## Core System Architecture
+## 3. Core System Architecture
 
 ```mermaid
 graph TD
@@ -135,7 +139,7 @@ graph TD
 
 ---
 
-## The Five-Model Pipeline
+## 4. The Five-Model Pipeline
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -160,7 +164,7 @@ graph TD
 
 ### Model 2 — Balanced Operational Risk Classifier (+ TreeSHAP)
 * **Purpose**: Classifies operational risk into discrete operational tiers (`SAFE`, `WARNING`, `CRITICAL`) with calibrated class probability distributions.
-* **Algorithm**: `RandomForestClassifier` (balanced class weighting, 200 trees).
+* **Algorithm**: `RandomForestClassifier` (balanced class weighting, 120 trees, max_depth=16).
 * **Input**: Physical-chemical telemetry and nutrient ratios (`pH`, `DO`, `turbidity`, `conductivity`, `temperature`, `SSC`, `nitrate`, `phosphate`).
 * **Output**: Categorical prediction, class probabilities (`P(SAFE)`, `P(WARNING)`, `P(CRITICAL)`), and decision confidence.
 * **Downstream Role**: Feeds the TreeSHAP explainer for causal attribution and drives the primary triage state of the automation workflow engine.
@@ -188,7 +192,7 @@ graph TD
 
 ---
 
-## TreeSHAP Explainability
+## 5. TreeSHAP Explainability
 
 In mission-critical water operations, **a risk classification without justification is operationally unusable**. An operator cannot execute emergency sluice gate closures solely because a neural network or random forest returned `"CRITICAL"` with $95\%$ probability. Operators must understand *which specific physical parameter* triggered the decision and *in what direction*.
 
@@ -225,7 +229,7 @@ AquaNeon presents SHAP explanations in two synchronized formats:
 
 ---
 
-## Incident Simulator (Mission Runner)
+## 6. Incident Simulator (Mission Runner)
 
 The platform includes an interactive **Incident Simulator (Mission Runner)** designed for stress-testing AI decision pipelines against realistic industrial and ecological contamination scenarios.
 
@@ -254,7 +258,7 @@ When the user selects a preset and clicks **▶ START SIMULATION**:
 
 ---
 
-## Telemetry & Hardware Interface
+## 7. Telemetry & Hardware Interface
 
 ### Technical Honesty: Simulation vs. Physical Deployment
 
@@ -280,7 +284,7 @@ When the user selects a preset and clicks **▶ START SIMULATION**:
 
 ---
 
-## Automation & Workflow Engine
+## 8. Automation & Workflow Engine
 
 The automation workflow engine (`src/automation/workflow_engine.py`) bridges analytical model intelligence with simulated industrial control.
 
@@ -326,7 +330,7 @@ AI Diagnostic Result (Models 1-5 + XAI)
 
 ---
 
-## Digital Twin & SCADA Simulation
+## 9. Digital Twin & SCADA Simulation
 
 AquaNeon maintains an in-memory **Digital Twin** tracking the real-time physical state of five virtual water treatment plant components:
 
@@ -342,7 +346,7 @@ AquaNeon maintains an in-memory **Digital Twin** tracking the real-time physical
 
 ---
 
-## End-to-End Data Flow
+## 10. End-to-End Data Flow
 
 ```text
 [Telemetry Source] ───────────────> (pH, DO, Turbidity, SpCond, Temp, Nutrients)
@@ -391,7 +395,7 @@ AquaNeon maintains an in-memory **Digital Twin** tracking the real-time physical
 
 ---
 
-## Frontend: National Command Center
+## 11. Frontend: National Command Center
 
 The user interface is built with **Streamlit** as a modular National Water Command Center organized across three dedicated operational screens:
 
@@ -422,7 +426,7 @@ The user interface is built with **Streamlit** as a modular National Water Comma
 
 ---
 
-## Backend REST API (FastAPI)
+## 12. Backend REST API (FastAPI)
 
 The platform includes an asynchronous **FastAPI** backend (`backend/main.py`) exposing high-performance REST endpoints for integration with external IoT gateways, SCADA historians, and downstream dashboards.
 
@@ -441,7 +445,7 @@ The platform includes an asynchronous **FastAPI** backend (`backend/main.py`) ex
 
 ---
 
-## Dataset & Training Methodology
+## 13. Dataset & Training Methodology
 
 ### Dataset Specifications
 
@@ -449,18 +453,18 @@ The platform includes an asynchronous **FastAPI** backend (`backend/main.py`) ex
 |---|---|
 | **Primary Data Source** | USGS (United States Geological Survey) National Water Information System & NEON Surface Water Telemetry |
 | **Storage Formats** | Apache Parquet (`data/processed/usgs_water_quality.parquet`, `data/labeled/operational_risk_labels_v2.parquet`) |
-| **Total Sampled Records** | $100,000\text{ observation records}$ |
+| **Total Sampled Records** | $99,995\text{ observation records}$ ($79,998\text{ train}$, $19,997\text{ test}$) |
 | **Core Features ($11$)** | `ph`, `dissolved_oxygen`, `turbidity`, `specific_conductance`, `temperature`, `fdom`, `nitrate_mg_l`, `phosphate_mg_l`, `chlorophyll_a_ug_l`, `suspended_sediment`, `lead_risk_index` |
 | **Target Variables** | Unsupervised Anomaly Score, Operational Risk Tier (`SAFE`, `WARNING`, `CRITICAL`), Eco-Health Index ($0-100$), 24h Ahead DO / Turbidity |
-| **Validation Strategy** | Strict **Temporal Hold-Out Split** (Train: 2018–2024 / $80,000\text{ records}$, Test: 2024–2025 / $20,000\text{ records}$) to ensure zero data leakage |
+| **Validation Strategy** | Strict **Temporal Hold-Out Split** (Train: 2024 / $79,998\text{ records}$, Test: 2025 / $19,997\text{ records}$) to ensure zero data leakage |
 | **Preprocessing** | `SimpleImputer(strategy="median")` + `RobustScaler()` to safeguard against extreme flash turbidity spikes |
 
 ---
 
-## Model Evaluation & Performance Benchmarks
+## 14. Model Evaluation & Performance Benchmarks
 
 ### Model 1: Anomaly Detection (Isolation Forest)
-* **Metric**: Empirical Anomaly Detection Rate on Unseen Temporal Test Set (2025).
+* **Metric**: Empirical Anomaly Detection Rate on Unseen Temporal Test Set (2025 / 20,000 samples).
 * **Results**:
   * Nominal Baseline Detection Rate: **$88.25\%$ Normal** on pristine water records.
   * Extreme Contamination Capture: **$92.33\%$ Anomaly Detection Rate** on confirmed critical incidents.
@@ -478,7 +482,7 @@ The platform includes an asynchronous **FastAPI** backend (`backend/main.py`) ex
   * **CRITICAL Class Precision**: **$0.8484$** ($\text{Precision: } 0.8484$, $\text{Recall: } 0.4735$)
 
 ### Model 4: 24-Hour Early Warning Forecaster (HistGradientBoosting)
-* **Metric**: Coefficient of Determination ($R^2$), Mean Absolute Error (MAE), and Root Mean Squared Error (RMSE) on Unseen Temporal Partition (2023–2024).
+* **Metric**: Coefficient of Determination ($R^2$), Mean Absolute Error (MAE), and Root Mean Squared Error (RMSE) on Unseen Temporal Partition (2023–2024 / 544 samples).
 * **Results**:
   * **Dissolved Oxygen (24h Ahead) $R^2$**: **$0.7764$** (vs. $0.2920$ Baseline — **$+166.9\%$ Relative Gain**)
   * **Turbidity (24h Ahead) MAE**: **$35.28\text{ FNU}$** (**$-32.6\%$ Error Reduction**)
@@ -486,7 +490,7 @@ The platform includes an asynchronous **FastAPI** backend (`backend/main.py`) ex
 
 ---
 
-## Technology Stack
+## 15. Technology Stack
 
 | Layer | Technology | Version | Purpose |
 |---|---|---|---|
@@ -507,7 +511,7 @@ The platform includes an asynchronous **FastAPI** backend (`backend/main.py`) ex
 
 ---
 
-## Database & Persistent Storage
+## 16. Database & Persistent Storage
 
 AquaNeon utilizes a lightweight, high-performance embedded **SQLite** database (`data/telemetry_history.db`) for continuous time-series logging:
 
@@ -544,7 +548,7 @@ CREATE INDEX IF NOT EXISTS idx_node_id ON telemetry_records(node_id);
 
 ---
 
-## Security & Data Integrity
+## 17. Security & Data Integrity
 
 1. **Input Boundary Sanitization**: All incoming network payloads are strictly validated against Pydantic models with explicit physical bounds, preventing injection attacks and numerical NaN corruptions.
 2. **Cryptographic SHA-256 Audit Trail**: Every critical incident and SCADA mitigation command generates a deterministic SHA-256 cryptographic signature recording the exact timestamp, telemetry values, model outputs, and operator mode:
@@ -553,7 +557,7 @@ CREATE INDEX IF NOT EXISTS idx_node_id ON telemetry_records(node_id);
 
 ---
 
-## Deployment Architecture
+## 18. Deployment Architecture
 
 AquaNeon is containerized using Docker and deployed on Render as a multi-process web service:
 
@@ -573,7 +577,7 @@ AquaNeon is containerized using Docker and deployed on Render as a multi-process
 
 ---
 
-## Local Setup & Quickstart
+## 19. Local Development & Setup
 
 ### Prerequisites
 * Python 3.10, 3.11, or 3.12
@@ -595,13 +599,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3. Run the Automated Test Suite
-Verify that all 35 unit, integration, and scenario regression tests pass:
-```bash
-pytest tests/test_automation_workflows.py tests/test_backend_api.py -v
-```
-
-### 4. Launch the Platform Locally
+### 3. Launch the Platform Locally
 Launch both the FastAPI backend and Streamlit Command Center simultaneously using the multi-process launcher:
 ```bash
 ./start_platform.sh
@@ -616,52 +614,140 @@ Open your browser and navigate to `http://localhost:8501`.
 
 ---
 
-## Repository File Tree
+## 20. Testing & Validation
 
+The test suite covers unit logic, model inference pipelines, TreeSHAP attributions, scenario execution, and the SCADA automation workflow engine:
+
+```bash
+pytest tests/test_automation_workflows.py tests/test_backend_api.py -v
+```
+
+Output:
 ```text
-neon_water_project/
-├── backend/
-│   ├── main.py                     # FastAPI backend routes & request schemas
-│   ├── model_loader.py             # Five-model integrated inference orchestrator
-│   └── environmental_engine.py     # Biological & environmental sub-scores
-├── dashboard/
-│   ├── app.py                      # Streamlit National Command Center
-│   └── components/
-│       └── geospatial_map.py       # Map rendering & HTML components
-├── data/
-│   ├── geo/                        # Indian river basin GeoJSON & node mappings
-│   ├── labeled/                    # Operational training Parquet datasets
-│   └── telemetry_history.db        # SQLite time-series database
-├── demo/
-│   └── scenarios.json              # 5 presentation scenario presets
-├── iot/
-│   ├── autonomous_sensor.py        # Background multi-threaded sensor stream
-│   ├── mqtt_client.py              # Telemetry ingestion & buffer manager
-│   ├── database.py                 # SQLite database I/O operations
-│   └── config.py                   # Node constants & physical bounds
-├── models/
-│   ├── v2/                         # Isolation Forest & Random Forest models
-│   └── v3/                         # Ecological health & Forecaster models
-├── reports/                        # Evaluation reports & validation benchmarks
-├── scripts/                        # Dataset generation & model training scripts
-├── src/
-│   ├── automation/
-│   │   └── workflow_engine.py      # SCADA industrial automation engine (WF-001/002/003)
-│   └── ml/
-│       └── xai_explainer.py        # TreeSHAP explainer & contribution matrix
-├── tests/
-│   ├── test_automation_workflows.py# Workflow & SCADA integration tests
-│   └── test_backend_api.py         # FastAPI endpoint regression tests
-├── wokwi/                          # ESP32 IoT edge microcontroller simulation
-├── Dockerfile                      # Production Docker container definition
-├── render.yaml                     # Render Infrastructure-as-Code deployment spec
-├── requirements.txt                # Python project dependencies
-├── start_platform.sh               # Multi-process container startup script
-└── README.md                       # Master engineering documentation
+tests/test_automation_workflows.py::test_workflow_engine_safe_flow PASSED           [  2%]
+tests/test_automation_workflows.py::test_workflow_engine_critical_flow PASSED       [  5%]
+...
+tests/test_backend_api.py::test_predict_endpoint_acid_spill PASSED                  [ 97%]
+tests/test_backend_api.py::test_health_endpoint PASSED                              [100%]
+================================= 35 passed in 87.94s =================================
+```
+
+### Static Syntax & AST Validation
+To verify syntax integrity across all core backend, ML, and automation modules:
+```bash
+python -m ast dashboard/app.py
+python -m ast backend/main.py
+python -m ast backend/model_loader.py
+python -m ast src/ml/xai_explainer.py
+python -m ast src/automation/workflow_engine.py
 ```
 
 ---
 
-## License
+## 21. Screenshot Gallery
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+<table align="center" width="100%">
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/dashboard_screen1_gis.png" alt="Screen 1: National Geospatial Map" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Screen 1: National Geospatial River Basin Deployment Map</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/dashboard_screen2_digital_twin.png" alt="Screen 2: Digital Twin Sandbox" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Screen 2: Digital Twin & SCADA Telemetry Control Sandbox</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/dashboard_screen3_ai_models.png" alt="Screen 3: AI Intelligence Center" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Screen 3: Five-Model Intelligence HUD Cards & Diagnostics</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/dashboard_screen3_shap_automation.png" alt="Screen 3: TreeSHAP Waterfall" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Screen 3: TreeSHAP Local Attributions & SCADA Console</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/confusion_matrix_v2.png" alt="Model 2 Confusion Matrix" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Model 2: Operational Risk Classifier Confusion Matrix</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/anomaly_distribution_v2.png" alt="Model 1 Anomaly Score Distribution" width="100%" style="border-radius: 6px;"/>
+      <br/>
+      <b>Model 1: Isolation Forest Anomaly Score Distribution</b>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 22. Quick Demo Walkthrough
+
+To demonstrate AquaNeon interactively in under 2 minutes:
+
+1. Open the [Live Web Application](https://autonex-aqua-neon.onrender.com).
+2. Navigate to **Screen 3: AI Model Intelligence Center** via the sidebar navigation.
+3. Scroll down to the **Incident Simulator (Mission Runner)** panel.
+4. Select `🟢 1. Pristine Normal River Baseline` from the scenario dropdown and click **▶ START SIMULATION**.
+5. Observe that all 5 models report `SAFE` / `Normal`, the TreeSHAP waterfall shows negative risk attributions, and the SCADA console maintains `Nominal Flow (100%)`.
+6. Select `🔴 4. Industrial Acid & Toxic Chemical Spill` and click **▶ START SIMULATION**.
+7. Observe immediate pipeline reaction:
+   * **Model 1**: Flags multivariate `Anomaly`.
+   * **Model 2**: Predicts `CRITICAL` risk.
+   * **TreeSHAP**: Shows `Water pH (2.80)` as the primary $+0.224$ risk driver.
+   * **Model 3**: Drops Eco-Health Index to $35.4/100$ (`Ecotoxic Collapse`).
+   * **Model 4**: Triggers `EMERGENCY_OVERRIDE`.
+   * **Model 5**: Identifies `Severe Acidification / Chemical Influx`.
+   * **Digital Twin**: Dispatches `CLOSE_VALVE(INTAKE_001)` to isolate raw water intake ($0\%$) and starts the alkaline neutralizing pump ($100\%$).
+   * **Audit Ledger**: Computes SHA-256 cryptographic incident signature.
+
+---
+
+## 23. Engineering Design Decisions
+
+* **Why Streamlit?** Provides immediate, reactive multi-screen operational dashboards with built-in state management and high-performance charting without frontend boilerplate.
+* **Why FastAPI?** Asynchronous ASGI architecture allows low-latency REST endpoints for high-frequency telemetry ingestion from external IoT bridges.
+* **Why Random Forest for Model 2?** Ensembles of decision trees naturally handle nonlinear feature boundaries and tabular environmental data with high training stability and interpretability.
+* **Why Isolation Forest for Model 1?** Real-world water anomalies (e.g., unknown toxic chemicals) may not exist in supervised training data; tree isolation detects unmodeled multi-parameter drift without prior labels.
+* **Why TreeSHAP?** Computes exact Shapley feature attributions in polynomial time ($O(TLD^2)$), enabling real-time explainability on high-frequency streaming sensor packets.
+* **Why Docker?** Encapsulates C++ dependencies, geospatial packages, Python runtimes, and multi-process scripts into an immutable, portable artifact.
+* **Why Scenario-Based Simulation?** Provides reproducible, deterministic evaluation of safety-critical edge cases that cannot be easily created in physical water bodies on demand.
+
+---
+
+## 24. Limitations & Real-World Considerations
+
+* **Simulated Actuation**: The current Digital Twin is a software simulation layer. Direct physical deployment requires interfacing with industrial PLCs (e.g., via OPC UA or Modbus TCP) and implementing hardware interlocks.
+* **Telemetry Simulation**: While the platform supports HTTP packet publishing and Wokwi ESP32 emulation, production deployment requires physical multiprobe sensor hardware calibrated for biofouling and drift.
+* **Dataset Generalization**: Training data is derived from USGS and NEON freshwater monitoring stations. Applying the models to marine or hypersaline estuaries requires localized baseline recalibration.
+* **Sensor Fouling & Missing Data**: Real-world optical turbidity and DO sensors experience biological fouling; the current implementation uses median imputation, which should be augmented with automated sensor health degradation tracking.
+
+---
+
+## 25. Future Roadmap
+
+- [ ] **Hardware Gateway Integration**: Native Modbus RTU / RS-485 serial multiprobe driver integration for direct hardware connection.
+- [ ] **Authenticated MQTT Broker**: TLS-encrypted MQTT bridge with mutual certificate authentication (mTLS).
+- [ ] **Time-Series Scaling**: Migration from embedded SQLite to TimescaleDB / InfluxDB for multi-year national sensor archival.
+- [ ] **Edge ML Deployment**: Quantized ONNX / TensorFlow Lite model exports for execution directly on edge microcontrollers (ESP32-S3 / Raspberry Pi).
+- [ ] **Physical Hardware-in-the-Loop (HIL)**: Validation with benchtop water quality sensors and miniature solenoid valves.
+
+---
+
+## 26. Author
+
+**Pitambar (Raj)**  
+*Independent Engineering & Systems Architecture Project*  
+GitHub: [@rajwav](https://github.com/rajwav)
+
+---
+
+## 27. License
+
+License not yet specified.
