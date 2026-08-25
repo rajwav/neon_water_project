@@ -326,7 +326,7 @@ class SHAPExplainer:
 
     def explain(
         self,
-        ph: Optional[float] = None,
+        ph: Any = None,
         dissolved_oxygen: Optional[float] = None,
         turbidity: Optional[float] = None,
         specific_conductance: Optional[float] = None,
@@ -348,6 +348,25 @@ class SHAPExplainer:
         Guaranteed to return non-empty feature contributions, top positive/negative
         drivers, and clear natural language effect descriptions.
         """
+        # Handle dict passed as first positional argument
+        if isinstance(ph, dict):
+            d = ph
+            if isinstance(dissolved_oxygen, str) and target_class is None:
+                target_class = dissolved_oxygen
+                dissolved_oxygen = None
+            ph = d.get("ph", d.get("pH"))
+            dissolved_oxygen = d.get("dissolved_oxygen", d.get("DO", d.get("dissolved_oxygen_mg_l", dissolved_oxygen)))
+            turbidity = d.get("turbidity", d.get("turbidity_fnu", turbidity))
+            specific_conductance = d.get("specific_conductance", d.get("conductivity", d.get("specific_conductance_us_cm", specific_conductance)))
+            temperature = d.get("temperature", d.get("temperature_c", temperature if temperature is not None else 20.0))
+            suspended_sediment = d.get("suspended_sediment", d.get("suspended_sediment_conc_mg_l", suspended_sediment))
+            total_nitrogen = d.get("total_nitrogen", d.get("total_nitrogen_est_mg_l", total_nitrogen))
+            total_phosphorus = d.get("total_phosphorus", d.get("total_phosphorus_est_mg_l", total_phosphorus))
+            n_to_p_ratio = d.get("n_to_p_ratio", n_to_p_ratio)
+            ssc_to_turbidity_ratio = d.get("ssc_to_turbidity_ratio", ssc_to_turbidity_ratio)
+            bio_taxa_richness = d.get("bio_taxa_richness", bio_taxa_richness)
+            biological_sampled = d.get("biological_sampled", d.get("biological_sampled_flag", biological_sampled))
+
         # Derived nutrient and sediment ratios
         if n_to_p_ratio is None and total_nitrogen is not None and total_phosphorus is not None:
             n_to_p_ratio = total_nitrogen / max(total_phosphorus, 0.001)
