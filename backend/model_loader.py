@@ -28,8 +28,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODEL_V2_DIR = PROJECT_ROOT / "models" / "v2"
 MODEL_V3_DIR = PROJECT_ROOT / "models" / "v3"
 
-ANOMALY_MODEL_PATH = MODEL_V2_DIR / "anomaly_detector_v2.joblib"
-RISK_MODEL_PATH = MODEL_V2_DIR / "risk_classifier_v2.joblib"
+ANOMALY_MODEL_PATH_V3 = MODEL_V3_DIR / "anomaly_detector_usgs.joblib"
+RISK_MODEL_PATH_V3 = MODEL_V3_DIR / "risk_classifier_usgs.joblib"
+ANOMALY_MODEL_PATH_V2 = MODEL_V2_DIR / "anomaly_detector_v2.joblib"
+RISK_MODEL_PATH_V2 = MODEL_V2_DIR / "risk_classifier_v2.joblib"
 ECO_ENGINE_PATH = MODEL_V3_DIR / "ecological_health_engine.joblib"
 FORECASTER_PATH = MODEL_V3_DIR / "model4_forecaster.joblib"
 
@@ -38,8 +40,12 @@ class WaterIntelligenceEngine:
     """Inference engine managing Models 1-5 and Neuro-Symbolic Decision Fusion."""
 
     def __init__(self):
+        self.anomaly_artifact = None
+        self.risk_artifact = None
         self.anomaly_model = None
         self.risk_model = None
+        self.risk_features = []
+        self.risk_classes = ["CRITICAL", "SAFE", "WARNING"]
         self.eco_engine = None
         self.forecaster = None
         self.is_loaded = False
@@ -47,13 +53,13 @@ class WaterIntelligenceEngine:
 
     def load_models(self):
         """Load joblib model pipelines and engines into memory."""
-        if not ANOMALY_MODEL_PATH.exists():
-            raise FileNotFoundError(f"Model 1 artifact missing: {ANOMALY_MODEL_PATH}")
-        if not RISK_MODEL_PATH.exists():
-            raise FileNotFoundError(f"Model 2 artifact missing: {RISK_MODEL_PATH}")
+        if not ANOMALY_MODEL_PATH_V2.exists():
+            raise FileNotFoundError(f"Model 1 artifact missing: {ANOMALY_MODEL_PATH_V2}")
+        if not RISK_MODEL_PATH_V2.exists():
+            raise FileNotFoundError(f"Model 2 artifact missing: {RISK_MODEL_PATH_V2}")
 
-        self.anomaly_model = joblib.load(ANOMALY_MODEL_PATH)
-        self.risk_model = joblib.load(RISK_MODEL_PATH)
+        self.anomaly_model = joblib.load(ANOMALY_MODEL_PATH_V2)
+        self.risk_model = joblib.load(RISK_MODEL_PATH_V2)
 
         if ECO_ENGINE_PATH.exists():
             self.eco_engine = joblib.load(ECO_ENGINE_PATH)
@@ -90,9 +96,32 @@ class WaterIntelligenceEngine:
         bio_taxa_richness: int = 0,
         biological_sampled: int = 0,
         recent_history: Optional[List[Dict[str, float]]] = None,
+        nitrate: Optional[float] = None,
+        phosphate: Optional[float] = None,
+        nitrate_mg_l: Optional[float] = None,
+        phosphate_mg_l: Optional[float] = None,
+        chlorophyll_a_ug_l: Optional[float] = None,
+        lead_risk_index: Optional[float] = None,
+        mercury_risk_index: Optional[float] = None,
+        arsenic_risk_index: Optional[float] = None,
+        microbial_risk_index: Optional[float] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
-        if heavy_metal_risk is not None and lead_risk is None:
-            lead_risk = heavy_metal_risk
+        # Handle aliases
+        if tn_mg_l is None:
+            tn_mg_l = nitrate_mg_l if nitrate_mg_l is not None else nitrate
+        if tp_mg_l is None:
+            tp_mg_l = phosphate_mg_l if phosphate_mg_l is not None else phosphate
+        if chlorophyll is None:
+            chlorophyll = chlorophyll_a_ug_l
+        if lead_risk is None:
+            lead_risk = lead_risk_index if lead_risk_index is not None else heavy_metal_risk
+        if mercury_risk is None:
+            mercury_risk = mercury_risk_index
+        if arsenic_risk is None:
+            arsenic_risk = arsenic_risk_index
+        if microbial_risk is None:
+            microbial_risk = microbial_risk_index
 
         """
         Execute full multi-domain prediction pipeline:
@@ -144,10 +173,50 @@ class WaterIntelligenceEngine:
         if len(valid_params) < 2:
             risk_label = "INSUFFICIENT_DATA"
             confidence = 0.0
+            prob_dict = {"CRITICAL": 0.0, "SAFE": 0.0, "WARNING": 0.0}
         else:
             risk_label = str(self.risk_model.predict(df_m2)[0])
-            probabilities = self.risk_model.predict_proba(df_m2)[0]
-            confidence = float(np.max(probabilities))
+            probabilities_raw = self.risk_model.predict_proba(df_m2)[0]
+            confidence = float(np.max(probabilities_raw))
+            classes = getattr(self.risk_model, "classes_", ["CRITICAL", "INSUFFICIENT_DATA", "SAFE", "WARNING"])
+            prob_dict = {c: round(float(p), 4) for c, p in zip(classes, probabilities_raw) if c != "INSUFFICIENT_DATA"}
+
+        # Model 2 Explanations & Decision Boundary
+        m2_explanations = []
+        if risk_label == "CRITICAL":
+            m2_explanations.append("High multi-parameter deviation: Critical operational risk detected by Random Forest.")
+            if ph is not None and (ph < 6.0 or ph > 9.0):
+                m2_explanations.append(f"Significant pH excursion ({ph:.2f}) outside safe baseline [6.5 - 8.5].")
+            if dissolved_oxygen is not None and dissolved_oxygen < 4.0:
+                m2_explanations.append(f"Reduced dissolved oxygen ({dissolved_oxygen:.2f} mg/L) indicating severe aquatic stress.")
+            if specific_conductance is not None and specific_conductance > 800.0:
+                m2_explanations.append(f"Elevated electrical conductance ({specific_conductance:.0f} µS/cm) indicating high ionic load.")
+            if turbidity is not None and turbidity > 25.0:
+                m2_explanations.append(f"Increased turbidity ({turbidity:.1f} FNU) indicating heavy particulate runoff.")
+        elif risk_label == "WARNING":
+            m2_explanations.append("Moderate parameter fluctuation: Early abnormal shifts detected.")
+            if turbidity is not None and turbidity > 15.0:
+                m2_explanations.append(f"Elevated turbidity ({turbidity:.1f} FNU).")
+            if dissolved_oxygen is not None and dissolved_oxygen < 6.0:
+                m2_explanations.append(f"Dissolved oxygen ({dissolved_oxygen:.2f} mg/L) below optimal range.")
+        else:
+            m2_explanations.append("All primary water quality parameters conform to safe baseline standards.")
+
+        model2_block = {
+            "model": "Random Forest Risk Classifier",
+            "class": risk_label,
+            "prediction": risk_label,
+            "risk_tier": risk_label,
+            "confidence": round(confidence, 4),
+            "probability": round(confidence, 4),
+            "probabilities": prob_dict,
+            "decision_boundary": {
+                "SAFE": "Normal water parameters within acceptable safe operating envelope.",
+                "WARNING": "Early abnormal shifts or single-parameter threshold excursions detected.",
+                "CRITICAL": "Multiple parameters significantly deviate from historical safe baseline.",
+            },
+            "explanation": m2_explanations,
+        }
 
         # ── 3. Model 3: Biological Ecosystem Health Engine ─────────
         if self.eco_engine is not None:
@@ -225,8 +294,7 @@ class WaterIntelligenceEngine:
         final_stat = env_result["final_status"]
 
         # ── 5b. Model 4 Operational Safety Layer: Emergency Override ─
-        # When an acute contamination shock occurs (e.g. chemical spill, lethal acidification,
-        # acute anoxia), statistical time-series forecasting based on gradual natural evolution
+        # When an acute contamination shock occurs, statistical time-series forecasting
         # is suppressed in favor of immediate containment and emergency operational protocols.
         if final_stat == "CRITICAL":
             forecast_diag["future_projected_status"] = "EMERGENCY_OVERRIDE"
@@ -287,18 +355,15 @@ class WaterIntelligenceEngine:
             microbial_risk=microbial_risk,
         )
 
-
         # ── 8. Assemble Integrated Multi-Model Response ────────────
         structured_response = {
-            # Structured Model Blocks
+            # Structured Model Blocks (Authoritative single source of truth)
             "anomaly_detection": {
                 "status": anomaly_status,
                 "score": round(anomaly_score, 4),
             },
-            "risk_prediction": {
-                "class": risk_label,
-                "probability": round(confidence, 4),
-            },
+            "risk_prediction": model2_block,
+            "risk_classification": model2_block,
             "biological_health": {
                 "score": bio_diag["biological_health_score"],
                 "classification": bio_diag["ecological_tier"],

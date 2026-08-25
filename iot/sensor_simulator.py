@@ -9,6 +9,8 @@ import random
 import time
 from typing import Any, Callable, Dict, Optional
 
+import numpy as np
+
 from iot.config import (
     ACTIVE_NODE_ID,
     MQTT_TOPIC_TELEMETRY,
@@ -31,65 +33,104 @@ class HirakudVirtualSensorNode:
         self.base_turbidity = 4.50
         self.base_temp = 21.30
         self.base_cond = 280.0
-        self.base_nitrate = 4.20
-        self.base_phosphate = 0.05
-        self.base_heavy_metal = 0.06
+        self.base_nitrate = 0.45
+        self.base_phosphate = 0.015
+        self.base_heavy_metal = 0.02
         self.base_microbial = 3.5
 
         # Active injected incident scenario (if any)
         self.active_incident: Optional[str] = None
+        self.incident_step_counter = 0
         self.packet_counter = 0
 
     def set_incident_scenario(self, incident_type: Optional[str]) -> None:
         """Inject an intentional contamination scenario for testing."""
-        self.active_incident = incident_type
+        if self.active_incident != incident_type:
+            self.active_incident = incident_type
+            self.incident_step_counter = 0
 
     def generate_telemetry_packet(self) -> Dict[str, Any]:
-        """Generate a single timestamped sensor telemetry packet with natural physical variance."""
+        """Generate a timestamped sensor telemetry packet with physics-informed diurnal cycles."""
         self.packet_counter += 1
-        now_utc = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc)
+        now_utc = now.isoformat()
 
-        if self.active_incident == "acid_spill":
-            ph = round(max(2.0, min(14.0, random.gauss(3.8, 0.2))), 2)
-            do = round(max(0.1, min(15.0, random.gauss(7.2, 0.4))), 2)
-            turb = round(max(0.1, random.gauss(18.5, 2.0)), 2)
-            temp = round(random.gauss(22.8, 0.5), 2)
-            cond = round(max(50.0, random.gauss(840.0, 30.0)), 1)
-            nitrate = round(max(0.1, random.gauss(6.5, 0.5)), 2)
-            phosphate = round(max(0.01, random.gauss(0.12, 0.02)), 3)
-            hm_risk = round(min(1.0, random.gauss(0.75, 0.05)), 3)
-            micro_risk = round(random.gauss(12.0, 2.0), 1)
-        elif self.active_incident == "eutrophication":
-            ph = round(max(2.0, min(14.0, random.gauss(8.9, 0.2))), 2)
-            do = round(max(0.1, min(15.0, random.gauss(2.4, 0.3))), 2)
-            turb = round(max(0.1, random.gauss(28.0, 3.0)), 2)
-            temp = round(random.gauss(26.5, 0.4), 2)
-            cond = round(max(50.0, random.gauss(520.0, 20.0)), 1)
-            nitrate = round(max(0.1, random.gauss(18.5, 1.5)), 2)
-            phosphate = round(max(0.01, random.gauss(1.25, 0.1)), 3)
-            hm_risk = round(min(1.0, random.gauss(0.15, 0.03)), 3)
-            micro_risk = round(random.gauss(45.0, 5.0), 1)
-        elif self.active_incident == "toxic_waste":
-            ph = round(max(2.0, min(14.0, random.gauss(5.2, 0.3))), 2)
-            do = round(max(0.1, min(15.0, random.gauss(1.8, 0.3))), 2)
-            turb = round(max(0.1, random.gauss(65.0, 5.0)), 2)
-            temp = round(random.gauss(24.0, 0.6), 2)
-            cond = round(max(50.0, random.gauss(1250.0, 50.0)), 1)
-            nitrate = round(max(0.1, random.gauss(22.0, 2.0)), 2)
-            phosphate = round(max(0.01, random.gauss(2.1, 0.2)), 3)
-            hm_risk = round(min(1.0, random.gauss(0.92, 0.03)), 3)
-            micro_risk = round(random.gauss(88.0, 6.0), 1)
-        else:
-            # Baseline natural fluctuations
-            ph = round(max(6.5, min(8.5, random.gauss(self.base_ph, 0.06))), 2)
-            do = round(max(5.0, min(12.0, random.gauss(self.base_do, 0.15))), 2)
-            turb = round(max(1.0, min(15.0, random.gauss(self.base_turbidity, 0.25))), 2)
-            temp = round(max(15.0, min(28.0, random.gauss(self.base_temp, 0.20))), 2)
-            cond = round(max(100.0, min(450.0, random.gauss(self.base_cond, 5.0))), 1)
-            nitrate = round(max(0.5, min(10.0, random.gauss(self.base_nitrate, 0.20))), 2)
-            phosphate = round(max(0.01, min(0.20, random.gauss(self.base_phosphate, 0.005))), 3)
-            hm_risk = round(max(0.01, min(0.30, random.gauss(self.base_heavy_metal, 0.01))), 3)
-            micro_risk = round(max(0.0, min(10.0, random.gauss(self.base_microbial, 0.5))), 1)
+        # 1. Physics: Solar Diurnal Cycle based on current UTC hour
+        hour_fraction = now.hour + now.minute / 60.0 + now.second / 3600.0
+        # Peak thermal radiation at 15:00 local time
+        temp_cycle = 2.5 * np.sin(2 * np.pi * (hour_fraction - 9.0) / 24.0)
+        temp = round(self.base_temp + temp_cycle + random.gauss(0.0, 0.08), 2)
+
+        # 2. Physics: Dissolved Oxygen saturation equilibrium (Henry's law & water temperature)
+        # Saturated DO at temperature T
+        do_sat = 14.652 - 0.41022 * temp + 0.007991 * (temp ** 2) - 0.000077774 * (temp ** 3)
+        # Photosynthetic diurnal swing (algae produce DO during midday, net respiration deficit at dawn)
+        photo_flux = 0.08 * np.sin(2 * np.pi * (hour_fraction - 8.0) / 24.0)
+        base_calc_do = do_sat * (0.92 + photo_flux)
+        do = round(max(0.0, base_calc_do + random.gauss(0.0, 0.06)), 2)
+
+        # 3. Physics: Carbonic acid equilibrium & diurnal pH swing
+        # (Algal CO2 uptake in daylight reduces carbonic acid H2CO3, slightly elevating pH)
+        ph_cycle = 0.12 * np.sin(2 * np.pi * (hour_fraction - 8.0) / 24.0)
+        ph = round(max(0.0, min(14.0, self.base_ph + ph_cycle + random.gauss(0.0, 0.02))), 2)
+
+        # 4. Specific conductance with thermal compensation (+1.9% per degree C above 20C)
+        cond_temp_factor = 1.0 + 0.019 * (temp - 20.0)
+        cond = round(max(10.0, self.base_cond * cond_temp_factor + random.gauss(0.0, 1.5)), 1)
+
+        turb = round(max(1.0, random.gauss(self.base_turbidity, 0.15)), 2)
+        nitrate = round(max(0.1, random.gauss(self.base_nitrate, 0.02)), 2)
+        phosphate = round(max(0.005, random.gauss(self.base_phosphate, 0.002)), 3)
+        hm_risk = round(max(0.005, min(0.15, random.gauss(self.base_heavy_metal, 0.005))), 3)
+        micro_risk = round(max(0.0, min(15.0, random.gauss(self.base_microbial, 0.3))), 1)
+
+        # 5. Continuous Plume Advection & Dispersion for Injected Scenarios
+        if self.active_incident:
+            self.incident_step_counter += 1
+            # Sigmoid plume arrival curve: alpha goes from 0.35 to 1.0 smoothly over steps
+            alpha = min(1.0, 0.35 + 0.65 / (1.0 + np.exp(-0.6 * (self.incident_step_counter - 4))))
+
+            if "acid" in self.active_incident:
+                # Industrial Acid Spill: pH crashes, conductivity surges from dissociated hydronium/sulfate ions
+                target_ph = 2.80 + random.gauss(0.0, 0.05)
+                target_cond = 1450.0 + random.gauss(0.0, 25.0)
+                target_turb = 28.0 + random.gauss(0.0, 1.5)
+                target_do = max(3.0, do - 3.5)
+                target_hm = 0.65
+
+                ph = round(ph * (1.0 - alpha) + target_ph * alpha, 2)
+                cond = round(cond * (1.0 - alpha) + target_cond * alpha, 1)
+                turb = round(turb * (1.0 - alpha) + target_turb * alpha, 2)
+                do = round(do * (1.0 - alpha) + target_do * alpha, 2)
+                hm_risk = round(hm_risk * (1.0 - alpha) + target_hm * alpha, 3)
+
+            elif "eutro" in self.active_incident:
+                # Eutrophication: Nitrogen/Phosphorus spike, severe nocturnal/secondary anoxia
+                target_nitrate = 14.5 + random.gauss(0.0, 0.8)
+                target_phosphate = 0.22 + random.gauss(0.0, 0.02)
+                target_do = 1.80 + random.gauss(0.0, 0.15)
+                target_turb = 35.0 + random.gauss(0.0, 2.0)
+                target_ph = 8.85 + random.gauss(0.0, 0.08)
+
+                nitrate = round(nitrate * (1.0 - alpha) + target_nitrate * alpha, 2)
+                phosphate = round(phosphate * (1.0 - alpha) + target_phosphate * alpha, 3)
+                do = round(do * (1.0 - alpha) + target_do * alpha, 2)
+                turb = round(turb * (1.0 - alpha) + target_turb * alpha, 2)
+                ph = round(ph * (1.0 - alpha) + target_ph * alpha, 2)
+
+            elif "toxic" in self.active_incident:
+                # Toxic Heavy Metal & Industrial Chemical Contamination
+                target_hm = 0.88 + random.gauss(0.0, 0.02)
+                target_cond = 1180.0 + random.gauss(0.0, 30.0)
+                target_ph = 5.60 + random.gauss(0.0, 0.1)
+                target_do = 2.20 + random.gauss(0.0, 0.15)
+                target_turb = 65.0 + random.gauss(0.0, 3.0)
+
+                hm_risk = round(hm_risk * (1.0 - alpha) + target_hm * alpha, 3)
+                cond = round(cond * (1.0 - alpha) + target_cond * alpha, 1)
+                ph = round(ph * (1.0 - alpha) + target_ph * alpha, 2)
+                do = round(do * (1.0 - alpha) + target_do * alpha, 2)
+                turb = round(turb * (1.0 - alpha) + target_turb * alpha, 2)
 
         packet = {
             "node_id": self.node_id,

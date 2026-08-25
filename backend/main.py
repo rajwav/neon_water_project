@@ -72,8 +72,17 @@ class AnomalyDetectionBlock(BaseModel):
 
 
 class RiskPredictionBlock(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    model: Optional[str] = Field("Random Forest Risk Classifier", description="Model architecture name")
     risk_class: str = Field(..., alias="class", examples=["SAFE"], description="Predicted risk class: SAFE, WARNING, CRITICAL")
-    probability: float = Field(..., examples=[0.9987], description="Prediction confidence probability (0-1)")
+    prediction: Optional[str] = Field(None, examples=["SAFE"], description="Authoritative risk prediction alias")
+    risk_tier: Optional[str] = Field(None, examples=["SAFE"], description="Operational risk tier alias")
+    confidence: Optional[float] = Field(None, examples=[0.95], description="Prediction confidence (0-1)")
+    probability: float = Field(..., examples=[0.95], description="Prediction confidence probability (0-1)")
+    probabilities: Optional[Dict[str, float]] = Field(default_factory=dict, description="Class-wise probability distribution")
+    decision_boundary: Optional[Dict[str, str]] = Field(default_factory=dict, description="Operational decision boundary descriptions")
+    explanation: Optional[List[str]] = Field(default_factory=list, description="Specific Model 2 causal drivers")
 
 
 class BiologicalSubScoresBlock(BaseModel):
@@ -167,6 +176,7 @@ class PredictionResponse(BaseModel):
     # Structured Model Blocks
     anomaly_detection: AnomalyDetectionBlock
     risk_prediction: RiskPredictionBlock
+    risk_classification: Optional[RiskPredictionBlock] = None
     biological_health: BiologicalHealthBlock
     early_warning_forecast: Optional[EarlyWarningForecastBlock] = None
     decision_support: Optional[DecisionSupportBlock] = None

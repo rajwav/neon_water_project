@@ -427,7 +427,7 @@ def final_environmental_status(
 
     # If any CRITICAL hard constraint violated:
     if critical_overrides:
-        safety_override = (m2_risk_label != "CRITICAL")
+        safety_override = True
         primary_reason = critical_overrides[0]
         # Clean up unique params
         unique_params = list(dict.fromkeys(contributing_params))
@@ -517,7 +517,32 @@ def final_environmental_status(
             ["anomaly_score"],
         )
 
-    # ── 6. SAFE ───────────────────────────────────────────────────
+    # ── 6. Emergency Rule Validation Layer Before Final Decision ───
+    # If pH < 5 or pH > 9, DO < 4, turbidity > 25, or conductivity > 1000, risk cannot be SAFE.
+    violates_envelope = (
+        (ph is not None and not np.isnan(ph) and (ph < 5.0 or ph > 9.0)) or
+        (dissolved_oxygen is not None and not np.isnan(dissolved_oxygen) and dissolved_oxygen < 4.0) or
+        (turbidity is not None and not np.isnan(turbidity) and turbidity > 25.0) or
+        (specific_conductance is not None and not np.isnan(specific_conductance) and specific_conductance > 1000.0)
+    )
+    if violates_envelope:
+        is_acute = (
+            (ph is not None and not np.isnan(ph) and (ph < 4.0 or ph > 10.0)) or
+            (dissolved_oxygen is not None and not np.isnan(dissolved_oxygen) and dissolved_oxygen < 2.5) or
+            (turbidity is not None and not np.isnan(turbidity) and turbidity > 75.0) or
+            (specific_conductance is not None and not np.isnan(specific_conductance) and specific_conductance > 1200.0)
+        )
+        escalated_stat = "CRITICAL" if is_acute else "WARNING"
+        return (
+            escalated_stat,
+            escalated_stat,
+            True,
+            ["Deterministic Environmental Safety Guardrail: Primary parameters violate statutory safe operating envelope."],
+            f"Safety Guardrail Triggered: Telemetry deviates from statutory safe baseline ({escalated_stat}).",
+            ["statutory_guardrail_excursion"],
+        )
+
+    # ── 7. SAFE ───────────────────────────────────────────────────
     return (
         "SAFE",
         "SAFE",

@@ -364,6 +364,17 @@ class WaterQualityForecaster:
         pred_turb_24h = float(self.model_turb.predict(feat_df)[0])
         pred_risk_prob = float(self.model_risk.predict_proba(feat_df)[0][1])
 
+        # Physical Baseline Constraint & Inertia Anchor:
+        # In stable baseline conditions (no historical trend), water quality has high physical inertia.
+        # Prevent multi-station global mean regression from causing artificial spikes on clean baseline rivers.
+        has_history = recent_history is not None and len(recent_history) >= 3
+        if not has_history or abs(row["turbidity_fnu_slope_7d"]) < 0.1:
+            if current_turb <= 15.0 and current_do >= 6.5 and current_ph >= 6.5 and current_ph <= 8.5:
+                # Stable river baseline: anchor predictions close to observed telemetry
+                pred_turb_24h = float(current_turb * 0.90 + pred_turb_24h * 0.10)
+                pred_do_24h = float(current_do * 0.90 + pred_do_24h * 0.10)
+                pred_risk_prob = min(pred_risk_prob, 0.05)
+
         do_delta = pred_do_24h - current_do
         turb_delta = pred_turb_24h - current_turb
 
@@ -385,7 +396,7 @@ class WaterQualityForecaster:
             reasons.append(f"DO decreasing consistently ({row['dissolved_oxygen_mg_l_slope_7d']*7.0:+.2f} mg/L over previous 7 days).")
         if current_temp > 24.0 or row["temperature_c_slope_7d"] > 0.2:
             reasons.append(f"Water temperature elevated/rising ({current_temp:.1f}°C), accelerating oxygen degassing.")
-        if row["turbidity_fnu_slope_7d"] > 1.5 or turb_delta > 10.0:
+        if row["turbidity_fnu_slope_7d"] > 1.5 or turb_delta > 15.0:
             reasons.append(f"Turbidity trend rising sharply (+{turb_delta:.1f} FNU expected drift from sediment runoff).")
         if row["ph_change_rate"] < -0.3:
             reasons.append(f"pH dropping ({row['ph_change_rate']:+.2f} rate of change), potential acid influx.")
@@ -393,11 +404,11 @@ class WaterQualityForecaster:
         future_status = "SAFE"
         if pred_do_24h < 4.0 or (current_do >= 5.0 and pred_do_24h < 5.0):
             future_status = "WARNING" if pred_do_24h >= 3.0 else "CRITICAL"
-        elif pred_turb_24h > 25.0 or turb_delta > 15.0 or pred_risk_prob >= 0.50:
+        elif pred_turb_24h > 25.0 or turb_delta > 15.0 or pred_risk_prob >= 0.40:
             future_status = "WARNING"
 
         if not reasons:
-            reasons.append(f"Multi-scale trends stable: DO {pred_do_24h:.2f} mg/L (drift: {do_delta:+.2f}), Turbidity {pred_turb_24h:.1f} FNU.")
+            reasons.append(f"Multi-scale trends stable: DO {pred_do_24h:.2f} mg/L (drift: {do_delta:+.2f}), Turbidity {pred_turb_24h:.1f} FNU (drift: {turb_delta:+.1f}).")
 
         return {
             "predicted_dissolved_oxygen_24h": round(max(0.0, min(20.0, pred_do_24h)), 2),

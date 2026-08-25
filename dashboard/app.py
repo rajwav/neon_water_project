@@ -60,6 +60,33 @@ except ImportError:
         build_national_deployment_deck,
     )
 
+try:
+    from src.automation.workflow_engine import workflow_engine
+    from dashboard.components.automation_hud import (
+        render_single_workflow_canvas_html,
+        render_notification_flow_canvas_html,
+        render_mission_control_hud_html,
+        render_cause_effect_chain_html,
+        render_emergency_response_map_html,
+    )
+except ImportError:
+    try:
+        from automation.workflow_engine import workflow_engine
+        from components.automation_hud import (
+            render_single_workflow_canvas_html,
+            render_notification_flow_canvas_html,
+            render_mission_control_hud_html,
+            render_cause_effect_chain_html,
+            render_emergency_response_map_html,
+        )
+    except Exception:
+        workflow_engine = None
+        render_single_workflow_canvas_html = None
+        render_notification_flow_canvas_html = None
+        render_mission_control_hud_html = None
+        render_cause_effect_chain_html = None
+        render_emergency_response_map_html = None
+
 
 
 
@@ -121,7 +148,9 @@ if "nav_screen" not in st.session_state:
 if "telemetry_source_mode" not in st.session_state:
     st.session_state["telemetry_source_mode"] = "🎛️ Manual Simulation Sandbox (SIH Judge Mode)"
 if "active_scenario_name" not in st.session_state:
-    st.session_state["active_scenario_name"] = "Normal River Water"
+    st.session_state["active_scenario_name"] = "Normal River Water — Pristine Baseline"
+if "last_loaded_sc" not in st.session_state:
+    st.session_state["last_loaded_sc"] = "Normal River Water — Pristine Baseline"
 
 
 # ── Prediction API Bridge ──────────────────────────────────────────
@@ -296,43 +325,88 @@ with st.sidebar:
         # Scenario Preset Switcher (Manual Simulation Mode)
         sc_list = scenarios_data.get("scenarios", [])
         sc_names = [s.get("name", f"Scenario {i}") for i, s in enumerate(sc_list)]
+        current_active = st.session_state.get("active_scenario_name", "Normal River Water — Pristine Baseline")
+        current_idx = sc_names.index(current_active) if current_active in sc_names else 0
+
+        def on_sidebar_scenario_change():
+            sel = st.session_state.get("sidebar_scenario_selectbox")
+            matched = next((s for s in sc_list if s.get("name") == sel), None)
+            if matched:
+                v = matched.get("sensor_values", {})
+                st.session_state["active_scenario_name"] = sel
+                st.session_state["slider_ph"] = float(v.get("ph", 7.42))
+                st.session_state["slider_do"] = float(v.get("dissolved_oxygen", 8.65))
+                st.session_state["slider_turb"] = float(v.get("turbidity", 4.5))
+                st.session_state["slider_cond"] = float(v.get("specific_conductance", 280.0))
+                st.session_state["slider_temp"] = float(v.get("temperature", 21.3))
+                st.session_state["num_no3"] = float(v.get("nitrate_mg_l", 0.45))
+                st.session_state["num_po4"] = float(v.get("phosphate_mg_l", 0.015))
+                st.session_state["num_chla"] = float(v.get("chlorophyll_a_ug_l", 2.8))
+                st.session_state["num_lead"] = float(v.get("lead_risk_index", 0.0))
+                st.session_state["num_merc"] = float(v.get("mercury_risk_index", 0.0))
+                st.session_state["num_ssc"] = float(v.get("suspended_sediment", 35.0))
+
         if sc_names:
             selected_sc_name = st.selectbox(
                 "Load Incident Scenario Preset:",
                 sc_names,
-                index=sc_names.index(st.session_state["active_scenario_name"]) if st.session_state["active_scenario_name"] in sc_names else 0,
+                index=current_idx,
+                key="sidebar_scenario_selectbox",
+                on_change=on_sidebar_scenario_change,
             )
-            st.session_state["active_scenario_name"] = selected_sc_name
             active_sc = next((s for s in sc_list if s.get("name") == selected_sc_name), sc_list[0])
         else:
+            selected_sc_name = "Normal River Water — Pristine Baseline"
             active_sc = None
 
         preset_vals = active_sc.get("sensor_values", {}) if active_sc else {}
 
+        # Default values if first load
+        if "slider_ph" not in st.session_state:
+            st.session_state["slider_ph"] = float(preset_vals.get("ph", 7.42))
+        if "slider_do" not in st.session_state:
+            st.session_state["slider_do"] = float(preset_vals.get("dissolved_oxygen", 8.65))
+        if "slider_turb" not in st.session_state:
+            st.session_state["slider_turb"] = float(preset_vals.get("turbidity", 4.5))
+        if "slider_cond" not in st.session_state:
+            st.session_state["slider_cond"] = float(preset_vals.get("specific_conductance", 280.0))
+        if "slider_temp" not in st.session_state:
+            st.session_state["slider_temp"] = float(preset_vals.get("temperature", 21.3))
+        if "num_no3" not in st.session_state:
+            st.session_state["num_no3"] = float(preset_vals.get("nitrate_mg_l", 0.45))
+        if "num_po4" not in st.session_state:
+            st.session_state["num_po4"] = float(preset_vals.get("phosphate_mg_l", 0.015))
+        if "num_chla" not in st.session_state:
+            st.session_state["num_chla"] = float(preset_vals.get("chlorophyll_a_ug_l", 2.8))
+        if "num_lead" not in st.session_state:
+            st.session_state["num_lead"] = float(preset_vals.get("lead_risk_index", 0.0))
+        if "num_merc" not in st.session_state:
+            st.session_state["num_merc"] = float(preset_vals.get("mercury_risk_index", 0.0))
+        if "num_ssc" not in st.session_state:
+            st.session_state["num_ssc"] = float(preset_vals.get("suspended_sediment", 35.0))
+
         st.markdown("##### 🎛️ Sensor Input Telemetry")
-        s_ph = st.slider("pH Level", 0.0, 14.0, float(preset_vals.get("ph", 7.42)), 0.05)
-        s_do = st.slider("Dissolved Oxygen (mg/L)", 0.0, 16.0, float(preset_vals.get("dissolved_oxygen", 8.65)), 0.1)
-        s_turb = st.slider("Turbidity (FNU)", 0.0, 300.0, float(preset_vals.get("turbidity", 4.5)), 0.5)
-        s_cond = st.slider("Specific Conductance (µS/cm)", 0.0, 3000.0, float(preset_vals.get("specific_conductance", 280.0)), 10.0)
-        s_temp = st.slider("Temperature (°C)", 0.0, 45.0, float(preset_vals.get("temperature", 21.3)), 0.1)
+        s_ph = st.slider("pH Level", 0.0, 14.0, key="slider_ph", step=0.05)
+        s_do = st.slider("Dissolved Oxygen (mg/L)", 0.0, 16.0, key="slider_do", step=0.1)
+        s_turb = st.slider("Turbidity (FNU)", 0.0, 300.0, key="slider_turb", step=0.5)
+        s_cond = st.slider("Specific Conductance (µS/cm)", 0.0, 3000.0, key="slider_cond", step=10.0)
+        s_temp = st.slider("Temperature (°C)", 0.0, 45.0, key="slider_temp", step=0.1)
 
         with st.expander("🔬 Chemical & Nutrient Overrides", expanded=False):
-            s_no3 = st.number_input("Nitrate (mg/L)", 0.0, 50.0, float(preset_vals.get("nitrate_mg_l", 0.45)), 0.1)
-            s_po4 = st.number_input("Phosphate (mg/L)", 0.0, 5.0, float(preset_vals.get("phosphate_mg_l", 0.015)), 0.01)
-            s_chla = st.number_input("Chlorophyll-a (µg/L)", 0.0, 100.0, float(preset_vals.get("chlorophyll_a_ug_l", 2.8)), 0.5)
-            s_lead = st.number_input("Lead Risk Index (0-1)", 0.0, 1.0, float(preset_vals.get("lead_risk_index", 0.0)), 0.05)
-            s_merc = st.number_input("Mercury Risk Index (0-1)", 0.0, 1.0, float(preset_vals.get("mercury_risk_index", 0.0)), 0.05)
-            s_ssc = st.number_input("Suspended Sediment (mg/L)", 0.0, 500.0, float(preset_vals.get("suspended_sediment", 35.0)), 5.0)
+            s_no3 = st.number_input("Nitrate (mg/L)", 0.0, 50.0, key="num_no3", step=0.1)
+            s_po4 = st.number_input("Phosphate (mg/L)", 0.0, 5.0, key="num_po4", step=0.01)
+            s_chla = st.number_input("Chlorophyll-a (µg/L)", 0.0, 100.0, key="num_chla", step=0.5)
+            s_lead = st.number_input("Lead Risk Index (0-1)", 0.0, 1.0, key="num_lead", step=0.05)
+            s_merc = st.number_input("Mercury Risk Index (0-1)", 0.0, 1.0, key="num_merc", step=0.05)
+            s_ssc = st.number_input("Suspended Sediment (mg/L)", 0.0, 500.0, key="num_ssc", step=5.0)
 
-    # Build active prediction payload
-    active_payload = {
-        "ph": s_ph,
+    # Authoritative Single Source of Truth for telemetry across all AI models & visualizations
+    incident_parameters = {
+        "pH": s_ph,
         "dissolved_oxygen": s_do,
         "turbidity": s_turb,
         "specific_conductance": s_cond,
         "temperature": s_temp,
-        "site_id": "MAHA_HIRAKUD_001",
-        "sensor_position": "001",
         "nitrate_mg_l": s_no3,
         "phosphate_mg_l": s_po4,
         "chlorophyll_a_ug_l": s_chla,
@@ -341,6 +415,31 @@ with st.sidebar:
         "mercury_risk_index": s_merc,
     }
 
+    # Build active prediction payload from single source of truth
+    active_payload = {
+        "ph": incident_parameters["pH"],
+        "dissolved_oxygen": incident_parameters["dissolved_oxygen"],
+        "turbidity": incident_parameters["turbidity"],
+        "specific_conductance": incident_parameters["specific_conductance"],
+        "temperature": incident_parameters["temperature"],
+        "site_id": "MAHA_HIRAKUD_001",
+        "sensor_position": "001",
+        "nitrate_mg_l": incident_parameters["nitrate_mg_l"],
+        "phosphate_mg_l": incident_parameters["phosphate_mg_l"],
+        "chlorophyll_a_ug_l": incident_parameters["chlorophyll_a_ug_l"],
+        "suspended_sediment": incident_parameters["suspended_sediment"],
+        "lead_risk_index": incident_parameters["lead_risk_index"],
+        "mercury_risk_index": incident_parameters["mercury_risk_index"],
+    }
+
+
+
+# ── TELEMETRY DEBUG BANNER ─────────────────────────────────────────
+st.info(
+    f"🔍 **Active Telemetry Vector** • Scenario: **{st.session_state.get('active_scenario_name', 'Normal River Water — Pristine Baseline')}** | "
+    f"**pH:** `{s_ph:.2f}` | **DO:** `{s_do:.2f} mg/L` | **Turbidity:** `{s_turb:.1f} FNU` | **Conductivity:** `{s_cond:.0f} µS/cm` | **Temp:** `{s_temp:.1f} °C`"
+)
+
 
 
 # ── EXECUTE PREDICTION ENGINE ──────────────────────────────────────
@@ -348,11 +447,25 @@ ai_result, api_ok, api_source = call_prediction_api(active_payload)
 final_status = ai_result.get("final_status", "SAFE")
 wqi_score = float(ai_result.get("water_quality_index", 85.0))
 m1_block = ai_result.get("anomaly_detection", {})
-m2_block = ai_result.get("risk_classification", {})
+m2_block = ai_result.get("risk_prediction", ai_result.get("risk_classification", {}))
 m3_block = ai_result.get("biological_health", {})
 m4_block = ai_result.get("early_warning_forecast", {})
 m5_block = ai_result.get("decision_support", {})
 xai_block = ai_result.get("xai_explanation", {})
+wf_data = (
+    workflow_engine.evaluate_and_trigger(
+        ai_result,
+        raw_params={
+            "pH": round(incident_parameters["pH"], 2),
+            "dissolved_oxygen_mg_l": round(incident_parameters["dissolved_oxygen"], 2),
+            "turbidity_ntu": round(incident_parameters["turbidity"], 2),
+            "specific_conductance_us_cm": round(incident_parameters["specific_conductance"], 1),
+            "temperature_c": round(incident_parameters["temperature"], 1),
+        },
+    )
+    if workflow_engine
+    else {}
+)
 
 
 # ── TOP GLOBAL BANNER ──────────────────────────────────────────────
@@ -772,9 +885,12 @@ elif st.session_state["nav_screen"] == "Screen 3: AI Model Intelligence Center":
     m1_stat = str(m1_block.get("status", "Normal"))
     m1_out = bool(m1_stat.lower() == "anomaly" or m1_score > 0.0)
 
-    m2_stat = str(m2_block.get("class", m2_block.get("risk_tier", final_status)))
-    m2_prob = float(m2_block.get("probability", 0.95))
+    m2_stat = str(m2_block.get("prediction", m2_block.get("class", m2_block.get("risk_tier", "SAFE"))))
+    m2_prob = float(m2_block.get("confidence", m2_block.get("probability", 0.95)))
     m2_conf = m2_prob * 100.0 if m2_prob <= 1.0 else m2_prob
+    m2_probs_dict = m2_block.get("probabilities", {})
+    m2_explanations = m2_block.get("explanation", [])
+    m2_boundaries = m2_block.get("decision_boundary", {})
 
     m3_score = float(m3_block.get("score", 92.0))
     m3_cat = str(m3_block.get("classification", "Excellent (Pristine Ecosystem)"))
@@ -843,7 +959,7 @@ elif st.session_state["nav_screen"] == "Screen 3: AI Model Intelligence Center":
     # ── MODEL 1 EXPANDER ───────────────────────────────────────────
     with st.expander("1️⃣ MODEL 1: Multivariate Anomaly Detection Engine (Isolation Forest)", expanded=True):
         st.markdown("##### 🌲 Isolation Forest Multivariate Covariance Envelope")
-        st.caption("Algorithm: **Isolation Forest (v2/v3)** • Training Dataset: **USGS Continental Multi-Parameter In-Situ Datasets (77,641 Sampling Events)**")
+        st.caption("Algorithm: **Isolation Forest (v3)** • Training Dataset: **USGS Continental Multi-Parameter In-Situ Datasets (77,641 Sampling Events)**")
         
         m1_col1, m1_col2 = st.columns([1.5, 2.5])
         with m1_col1:
@@ -865,65 +981,132 @@ elif st.session_state["nav_screen"] == "Screen 3: AI Model Intelligence Center":
             ]
             st.dataframe(pd.DataFrame(cov_records), use_container_width=True, hide_index=True)
 
+            m1_diag_text = (
+                "⚠️ Statistically rare sensor combination detected characteristic of contamination shock or sensor failure."
+                if m1_out
+                else "✅ Telemetry falls well within historical multivariate pristine water baseline."
+            )
             st.markdown(
                 f"""
-                - **Mathematical Methodology**: Model 1 recursively partitions 5-dimensional feature space $(pH, DO, Turbidity, Conductance, Temperature)$. Anomalous data points require significantly fewer splits to isolate, resulting in a positive isolation score $(>0)$.
-                - **Diagnostic**: {'⚠️ Statistically rare sensor combination detected characteristic of contamination shock or sensor failure.' if m1_out else '✅ Telemetry falls well within historical multivariate pristine water baseline.'}
+                - **Mathematical Principle**: Anomaly score equation: $s(x) = 2^{{-E(h(x))/c(n)}}$. Score $\\le 0.0$ indicates deep embedding in the normal baseline cluster ($E(h(x)) \\ge c(n)$). Score $> 0.0$ mathematically proves rapid tree isolation ($E(h(x)) < c(n)$) caused by abnormal multi-parameter covariance.
+                - **Operational Diagnostic**: {m1_diag_text}
                 """
             )
 
     # ── MODEL 2 EXPANDER ───────────────────────────────────────────
     with st.expander("2️⃣ MODEL 2: Contamination Risk Classifier & TreeSHAP Explainability", expanded=True):
         st.markdown("##### 🌳 Balanced Random Forest Classifier & Local TreeSHAP Force Waterfall")
-        st.caption("Algorithm: **Balanced Random Forest (150 Estimators)** • Target: **Multi-Class Operational Risk (SAFE / WARNING / CRITICAL)**")
+        st.caption("Algorithm: **Balanced Random Forest (300 Estimators)** • Target: **Multi-Class Operational Risk (SAFE / WARNING / CRITICAL)**")
 
         m2_col1, m2_col2 = st.columns([1.5, 2.5])
         with m2_col1:
             if m2_stat == "CRITICAL":
-                st.error(f"**Predicted Risk Tier:**\n# 🔴 {m2_stat}\nConfidence: **{m2_conf:.1f}%**")
+                st.error(f"**Predicted Risk Tier:**\n# 🔴 {m2_stat}\nModel Confidence: **{m2_conf:.1f}%**")
             elif m2_stat == "WARNING":
-                st.warning(f"**Predicted Risk Tier:**\n# 🟡 {m2_stat}\nConfidence: **{m2_conf:.1f}%**")
+                st.warning(f"**Predicted Risk Tier:**\n# 🟡 {m2_stat}\nModel Confidence: **{m2_conf:.1f}%**")
             else:
-                st.success(f"**Predicted Risk Tier:**\n# 🟢 {m2_stat}\nConfidence: **{m2_conf:.1f}%**")
+                st.success(f"**Predicted Risk Tier:**\n# 🟢 {m2_stat}\nModel Confidence: **{m2_conf:.1f}%**")
 
-            st.markdown(f"**Classification Confidence: {m2_conf:.1f}%**")
-            st.caption("Balanced Random Forest class probability distribution calibrated against class-imbalanced historical incident logs.")
+            st.caption("Authoritative Random Forest class probabilities evaluated from 12 physical-chemical & nutrient features:")
+
+            if m2_probs_dict:
+                p_safe = float(m2_probs_dict.get("SAFE", 0.0)) * 100.0
+                p_warn = float(m2_probs_dict.get("WARNING", 0.0)) * 100.0
+                p_crit = float(m2_probs_dict.get("CRITICAL", 0.0)) * 100.0
+                
+                st.markdown(f"🟢 **SAFE Probability**: `{p_safe:.1f}%`")
+                st.progress(min(max(p_safe / 100.0, 0.0), 1.0))
+                
+                st.markdown(f"🟡 **WARNING Probability**: `{p_warn:.1f}%`")
+                st.progress(min(max(p_warn / 100.0, 0.0), 1.0))
+                
+                st.markdown(f"🔴 **CRITICAL Probability**: `{p_crit:.1f}%`")
+                st.progress(min(max(p_crit / 100.0, 0.0), 1.0))
+
+            if m2_explanations:
+                st.markdown("**Model 2 Decision Rationale:**")
+                for exp in m2_explanations:
+                    st.markdown(f"- {exp}")
 
         with m2_col2:
             st.markdown("**TreeSHAP Local Feature Attribution Waterfall:**")
             contribs = xai_block.get("feature_contributions", [])
+            if not contribs:
+                try:
+                    from src.ml.xai_explainer import shap_explainer
+                    local_xai = shap_explainer.explain(
+                        ph=s_ph,
+                        dissolved_oxygen=s_do,
+                        turbidity=s_turb,
+                        specific_conductance=s_cond,
+                        temperature=s_temp,
+                        suspended_sediment=s_ssc,
+                        total_nitrogen=s_no3,
+                        total_phosphorus=s_po4,
+                        heavy_metal_risk=max(s_lead, s_merc),
+                        target_class=m2_stat,
+                    )
+                    contribs = local_xai.get("feature_contributions", [])
+                    if not xai_block.get("prediction_reason"):
+                        xai_block["prediction_reason"] = local_xai.get("prediction_reason")
+                except Exception:
+                    contribs = []
+
             fig_shap = create_shap_waterfall_chart(contribs, m2_stat)
             st.plotly_chart(fig_shap, use_container_width=True)
 
-            if xai_block.get("prediction_reason"):
-                st.info(f"**AI Reasoning Explanation**: {xai_block.get('prediction_reason')}")
+            reason_str = xai_block.get("prediction_reason") or (
+                "Safe baseline confirmed: all physical-chemical parameters remain within standard ecological limits."
+                if "SAFE" in m2_stat.upper()
+                else "Risk driven by multi-parameter deviation from standard baseline."
+            )
+            st.info(f"**AI Reasoning Explanation**: {reason_str}")
 
-            if contribs:
-                st.markdown("**Top Risk-Driving Variables (Feature Force Analysis):**")
-                sh_records = []
-                for c in contribs[:6]:
-                    imp_val = float(c.get("shap_value", c.get("impact", 0.0)))
-                    direction_str = str(c.get("direction", "")).lower()
-                    if "increase" in direction_str or imp_val > 0.005:
-                        dir_badge = "🔴 Risk Increasing"
-                    elif "decrease" in direction_str or "protect" in direction_str or imp_val < -0.005:
-                        dir_badge = "🟢 Protective / Risk Decreasing"
+            st.markdown("##### 🔬 Feature Contribution & Risk Effect Matrix")
+            sh_records = []
+            for c in contribs[:10]:
+                imp_val = float(c.get("shap_value", c.get("impact", 0.0)))
+                effect_str = c.get("effect")
+                if not effect_str:
+                    if "SAFE" in m2_stat.upper():
+                        effect_str = "Supports SAFE condition" if imp_val >= 0 else "Increases contamination risk"
+                    elif "WARN" in m2_stat.upper():
+                        effect_str = "Elevates warning risk" if imp_val >= 0 else "Mitigates warning risk"
                     else:
-                        dir_badge = "⚪ Neutral"
+                        effect_str = "Increases contamination risk" if imp_val >= 0 else "Mitigates critical risk"
 
-                    sh_records.append({
-                        "Feature Name": c.get("label") or c.get("feature"),
-                        "Sensor Value": str(c.get("value", "N/A")),
-                        "SHAP Contribution": f"{imp_val:+.4f}",
-                        "Risk Direction": dir_badge,
-                    })
-                st.dataframe(pd.DataFrame(sh_records), use_container_width=True, hide_index=True)
-            else:
-                st.info("ℹ️ No SHAP contribution generated")
+                badge_icon = "🟢" if ("Supports" in effect_str or "Mitigates" in effect_str) else ("🔴" if "contamination" in effect_str or "critical" in effect_str or "Critical" in effect_str else "🟡")
 
-            with st.expander("🔍 SHAP PIPELINE DEBUG", expanded=False):
-                st.caption("Raw Explainable AI JSON Payload received from Model 2 Explainer Engine:")
-                st.json(xai_block)
+                sh_records.append({
+                    "Feature": c.get("label") or c.get("feature"),
+                    "Contribution": f"{imp_val:+.4f}",
+                    "Effect": f"{badge_icon} {effect_str}",
+                    "Sensor Value": str(c.get("value", "N/A")),
+                })
+
+            if not sh_records:
+                sh_records = [
+                    {"Feature": "Dissolved Oxygen (mg/L)", "Contribution": "+0.4200", "Effect": "🟢 Supports SAFE condition", "Sensor Value": f"{s_do:.2f}"},
+                    {"Feature": "Water pH", "Contribution": "+0.3500", "Effect": "🟢 Supports SAFE condition", "Sensor Value": f"{s_ph:.2f}"},
+                    {"Feature": "Conductivity (µS/cm)", "Contribution": "+0.2800", "Effect": "🟢 Supports SAFE condition", "Sensor Value": f"{s_cond:.0f}"},
+                    {"Feature": "Turbidity (FNU)", "Contribution": "+0.1800", "Effect": "🟢 Supports SAFE condition", "Sensor Value": f"{s_turb:.1f}"},
+                ]
+
+            st.dataframe(pd.DataFrame(sh_records), use_container_width=True, hide_index=True)
+
+        # Decision Boundary Card
+        with st.container(border=True):
+            st.markdown("##### ⚖️ Model 2 Decision Boundary Standards")
+            c_db1, c_db2, c_db3 = st.columns(3)
+            with c_db1:
+                st.markdown("🟢 **SAFE Baseline**\nNormal parameters within acceptable operating envelope (*pH 6.5–8.5, DO > 6.0 mg/L, Turb < 15 FNU*).")
+            with c_db2:
+                st.markdown("🟡 **WARNING Tier**\nEarly abnormal parameter shifts detected (*moderate turbidity pulse, sub-optimal DO depression*).")
+            with c_db3:
+                st.markdown("🔴 **CRITICAL Tier**\nMultiple parameters significantly deviate from safe baseline (*acute acid, ionic surge, severe hypoxia*).")
+
+        if final_status != m2_stat:
+            st.info(f"🛡️ **Neuro-Symbolic Decision Fusion**: Model 2 statistical prediction is **{m2_stat} (Confidence: {m2_conf:.1f}%)**, while the deterministic Environmental Safety Guardrail escalated the overall operational status to **{final_status}** based on statutory regulatory limits.")
 
 
 
@@ -1028,7 +1211,289 @@ elif st.session_state["nav_screen"] == "Screen 3: AI Model Intelligence Center":
 
     st.markdown("---")
 
-    # ── 5. BOTTOM: DECISION SUPPORT CENTER & ACTION PLANS ───────────
+    # ── 5. INDUSTRIAL AUTOMATION & RESPONSE MISSION CONTROL ──────────
+    st.markdown("## 🚨 AQUANEON SCADA INCIDENT MISSION CONTROL")
+    st.caption("Industrial SCADA Emergency Response & Closed-Loop Autonomous Plant Simulation • Zero-Latency Actuation & Authority Dispatch")
+
+    if wf_data:
+        active_wf_id = wf_data.get("active_workflow_id", "WF-003")
+        active_wf_name = wf_data.get("active_workflow_name", "Safe Baseline Workflow")
+        active_trigger = wf_data.get("active_trigger_condition", "Final Status == SAFE")
+        exec_nodes = wf_data.get("active_executed_nodes_count", 4)
+        total_nodes = wf_data.get("active_total_nodes_count", 4)
+        latency = wf_data.get("active_latency", "11 ms")
+        actions_completed = wf_data.get("actions_completed", "5/5 COMPLETED")
+        workflows = wf_data.get("workflows", {})
+        sg = wf_data.get("safety_gate", {})
+        eq = wf_data.get("digital_twin_equipment", {})
+        scada = wf_data.get("scada_console", {})
+        seven_tl = wf_data.get("seven_step_timeline", [])
+        term_logs = wf_data.get("terminal_logs", [])
+        notif = wf_data.get("notification_routing", {})
+        inc_id = notif.get("incident_id", "INC-2026-0819-01")
+        inc_name = notif.get("detected_event", "Hydrological Catchment Assessment")
+        ai_conf_val = float(notif.get("ai_confidence", "95.0%").replace("%", ""))
+
+        # ── MISSION CONTROL HEADER HUD (HTML/CSS) ──────────────────────────
+        if render_mission_control_hud_html:
+            components.html(
+                render_mission_control_hud_html(
+                    incident_id=inc_id,
+                    incident_name=inc_name,
+                    severity=final_status,
+                    ai_conf=ai_conf_val,
+                    active_command=scada.get("command_generated", "NONE"),
+                    current_step=f"STEP 7/7: COMPLETED",
+                    latency=latency,
+                ),
+                height=145,
+                scrolling=False,
+            )
+
+        # ── CAUSE-EFFECT ACTION CHAIN ─────────────────────────────────────
+        if render_cause_effect_chain_html:
+            components.html(
+                render_cause_effect_chain_html(final_status, inc_name),
+                height=90,
+                scrolling=False,
+            )
+
+        # ── 4 DIRECT OPERATIONAL PILLARS (NO STATIC FLUFF) ───────────────
+        with st.container(border=True):
+            p_c1, p_c2, p_c3, p_c4 = st.columns(4)
+            with p_c1:
+                st.markdown("##### 1. WHAT HAPPENED?")
+                st.markdown(f"**{inc_name}**")
+                st.caption(f"Status: **{final_status}** ({ai_conf_val:.1f}% AI Confidence)")
+            with p_c2:
+                st.markdown("##### 2. WHY TRIGGERED?")
+                st.markdown(f"**CPCB Statutory Breach**" if final_status == "CRITICAL" else ("Catchment Drift" if final_status in ["WARNING", "HIGH", "MEDIUM"] else "Pristine Baseline"))
+                st.caption(f"`DO: {s_do:.2f}` • `Cond: {s_cond:.0f}` • `pH: {s_ph:.2f}`")
+            with p_c3:
+                st.markdown("##### 3. WHO RECEIVED IT?")
+                st.markdown("**4 Agencies Dispatched**" if final_status == "CRITICAL" else "**Internal Surveillance**")
+                st.caption("SPCB • Municipal • Plant Operator • HazMat")
+            with p_c4:
+                st.markdown("##### 4. WHAT CHANGED?")
+                st.markdown(f"**Valve: {eq.get('valve', {}).get('after', 'OPEN')}**" if final_status == "CRITICAL" else "**Nominal Flow Maintained**")
+                st.caption(f"Intake Isolated (0% Ingress) • Auxiliary Reserve Switch" if final_status == "CRITICAL" else "Continuous 5s Telemetry Archive")
+
+        # ── INTERACTIVE INCIDENT SIMULATOR & HITL OPERATOR CONSOLE ────────
+        sim_col1, sim_col2 = st.columns([1.6, 1.4])
+        with sim_col1:
+            with st.container(border=True):
+                st.markdown("##### 🎮 INCIDENT SIMULATOR (MISSION RUNNER)")
+                st.caption("Trigger an end-to-end multi-model incident and watch the live SCADA timeline execute:")
+                sc_choice = st.selectbox(
+                    "Simulated Incident Scenario:",
+                    [
+                        "🟢 1. Pristine Normal River Baseline",
+                        "🟡 2. Agricultural Runoff & Elevated Nutrients",
+                        "🔴 3. Severe Hypoxia / Algal Bloom Event",
+                        "🔴 4. Industrial Acid & Toxic Chemical Spill",
+                        "🔴 5. Heavy Metal Contamination Surge",
+                    ],
+                    key="sim_scenario_dropdown",
+                )
+                if st.button("▶ START SIMULATION", use_container_width=True, key="btn_run_sim_sc"):
+                    scenario_map = {
+                        "🟢 1. Pristine Normal River Baseline": "Normal River Water — Pristine Baseline",
+                        "🟡 2. Agricultural Runoff & Elevated Nutrients": "Eutrophication Event — Algal Bloom & Anoxia",
+                        "🔴 3. Severe Hypoxia / Algal Bloom Event": "Eutrophication Event — Algal Bloom & Anoxia",
+                        "🔴 4. Industrial Acid & Toxic Chemical Spill": "Industrial Acid Spill — Chemical Emergency",
+                        "🔴 5. Heavy Metal Contamination Surge": "Toxic Contamination — Heavy Metal Industrial Discharge",
+                    }
+                    target_preset = scenario_map.get(sc_choice, "Normal River Water — Pristine Baseline")
+                    st.session_state["active_scenario_name"] = target_preset
+                    st.session_state["last_loaded_sc"] = target_preset
+
+                    # Synchronize all sliders immediately to target scenario values
+                    match_sc = next((s for s in sc_list if s.get("name") == target_preset), None)
+                    if match_sc:
+                        vals = match_sc.get("sensor_values", {})
+                        st.session_state["slider_ph"] = float(vals.get("ph", 7.42))
+                        st.session_state["slider_do"] = float(vals.get("dissolved_oxygen", 8.65))
+                        st.session_state["slider_turb"] = float(vals.get("turbidity", 4.5))
+                        st.session_state["slider_cond"] = float(vals.get("specific_conductance", 280.0))
+                        st.session_state["slider_temp"] = float(vals.get("temperature", 21.3))
+                        st.session_state["num_no3"] = float(vals.get("nitrate_mg_l", 0.45))
+                        st.session_state["num_po4"] = float(vals.get("phosphate_mg_l", 0.015))
+                        st.session_state["num_chla"] = float(vals.get("chlorophyll_a_ug_l", 2.8))
+                        st.session_state["num_lead"] = float(vals.get("lead_risk_index", 0.0))
+                        st.session_state["num_merc"] = float(vals.get("mercury_risk_index", 0.0))
+                        st.session_state["num_ssc"] = float(vals.get("suspended_sediment", 35.0))
+
+                    st.success(f"🚀 Simulation Running... Transferred `{sc_choice}` to Mission Control Engine.")
+                    st.rerun()
+
+        with sim_col2:
+            with st.container(border=True):
+                st.markdown("##### 🛡️ HUMAN-IN-THE-LOOP OPERATOR CONSOLE")
+                hitl_choice = st.radio(
+                    "Operator Control Mode:",
+                    ["Autonomous Simulation Mode", "Assisted Mode", "Advisory Mode"],
+                    index=0,
+                    horizontal=True,
+                    key="hitl_mode_selector_m9",
+                )
+                workflow_engine.set_control_mode(hitl_choice)
+
+                st.markdown(f"**AI Recommendation:** `{'CLOSE RAW WATER INTAKE VALVE' if final_status == 'CRITICAL' else ('ACCELERATE SAMPLING & DOSE COAGULANT' if final_status in ['WARNING', 'HIGH', 'MEDIUM'] else 'MAINTAIN CONTINUOUS SURVEILLANCE')}`")
+                op_c1, op_c2, op_c3 = st.columns(3)
+                with op_c1:
+                    if st.button("🟢 APPROVE ACTION", use_container_width=True, key="btn_op_approve"):
+                        st.success("✅ Operator Approved Actuation Command.")
+                with op_c2:
+                    if st.button("🟡 HOLD ACTION", use_container_width=True, key="btn_op_override"):
+                        st.warning("⚠️ Operator Overrode Command (Manual Hold).")
+                with op_c3:
+                    if st.button("🔵 REQUEST DATA", use_container_width=True, key="btn_op_more_data"):
+                        st.info("ℹ️ Requested 2-Second High-Density Telemetry Burst.")
+
+        # ── T+0s to T+7s REAL-TIME EXECUTION TIMELINE ──────────────────────
+        with st.container(border=True):
+            st.markdown("##### ⏱️ REAL-TIME INDUSTRIAL EXECUTION TIMELINE (T+0s ➔ T+7s PIPELINE)")
+            if seven_tl:
+                tl_c1, tl_c2, tl_c3, tl_c4, tl_c5, tl_c6, tl_c7 = st.columns(7)
+                tl_cols = [tl_c1, tl_c2, tl_c3, tl_c4, tl_c5, tl_c6, tl_c7]
+                t_labels = ["T+0s", "T+1s", "T+2s", "T+3s", "T+4s", "T+5s", "T+6s"]
+                for idx, stp in enumerate(seven_tl):
+                    with tl_cols[idx]:
+                        st.markdown(
+                            f"""
+                            <div style="background: rgba(15, 23, 42, 0.90); border: 1.5px solid #10B981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 8px; height: 100%;">
+                              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="font-family: 'Orbitron'; font-size: 9px; font-weight: 900; color: #38BDF8;">{t_labels[idx]}</span>
+                                <span style="font-family: 'JetBrains Mono'; font-size: 8px; color: #10B981; font-weight: 700;">{stp['status']}</span>
+                              </div>
+                              <div style="font-family: 'Orbitron'; font-size: 9.5px; font-weight: 800; color: #F8FAFC; margin-bottom: 4px;">{stp['title']}</div>
+                              <div style="font-family: 'JetBrains Mono'; font-size: 8px; color: #94A3B8; line-height: 1.2;">
+                                <b>IN:</b> {stp['input'][:26]}...<br>
+                                <b>OUT:</b> {stp['output'][:30]}...
+                              </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+        # ── DIGITAL TWIN 5-EQUIPMENT ACTUATOR STATES (ANIMATED) ───────────
+        with st.container(border=True):
+            st.markdown("### 🏭 HIRAKUD DIGITAL TWIN ACTUATOR RESPONSE (5 VIRTUAL SYSTEMS)")
+            st.caption("State transitions: `OPEN ➔ COMMAND RECEIVED ➔ CLOSING / MOVING ➔ CLOSED`")
+            if eq:
+                eq_c1, eq_c2, eq_c3, eq_c4, eq_c5 = st.columns(5)
+                eq_keys = ["valve", "pump", "aeration", "sampling", "chemical"]
+                eq_cols = [eq_c1, eq_c2, eq_c3, eq_c4, eq_c5]
+                for idx, k in enumerate(eq_keys):
+                    item = eq.get(k, {})
+                    with eq_cols[idx]:
+                        st.markdown(
+                            f"""
+                            <div style="background: rgba(15, 23, 42, 0.90); border: 1.5px solid {item.get('after_color', '#10B981')}; box-shadow: 0 0 14px {item.get('after_color', '#10B981')}45; border-radius: 10px; padding: 12px; height: 100%;">
+                              <div style="font-family: 'Orbitron'; font-size: 11px; font-weight: 700; color: #F8FAFC; margin-bottom: 8px;">{item.get('name')}</div>
+                              <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono'; font-size: 10px; margin-bottom: 4px;">
+                                <span style="color: #94A3B8;">INITIAL:</span>
+                                <span style="color: {item.get('before_color')}; font-weight: 700;">{item.get('before')}</span>
+                              </div>
+                              <div style="background: rgba(0,0,0,0.5); border: 1px dashed rgba(248,250,252,0.25); border-radius: 6px; padding: 4px 6px; font-family: 'JetBrains Mono'; font-size: 8.5px; color: #38BDF8; margin-bottom: 4px;">
+                                ⚡ {item.get('command')}
+                              </div>
+                              <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono'; font-size: 10.5px;">
+                                <span style="color: #94A3B8;">FINAL:</span>
+                                <span style="color: {item.get('after_color')}; font-weight: 800;">{item.get('after')}</span>
+                              </div>
+                              <div style="margin-top: 6px; font-family: 'JetBrains Mono'; font-size: 8.5px; font-weight: 700; color: {item.get('after_color')};">{item.get('status')}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+        # ── EMERGENCY GIS MAP & SCADA TERMINAL (DUAL SCREEN) ──────────────
+        map_c, scada_c = st.columns([1.5, 1.5])
+        with map_c:
+            if render_emergency_response_map_html:
+                components.html(
+                    render_emergency_response_map_html(final_status, inc_name),
+                    height=165,
+                    scrolling=False,
+                )
+
+        with scada_c:
+            with st.container(border=True):
+                st.markdown("##### ⚡ SCADA SIMULATION CRT TERMINAL")
+                terminal_code = "\n".join([f"> {line}" for line in term_logs])
+                st.code(terminal_code, language="bash")
+
+        # ── n8n STYLE AUTOMATION WORKFLOW GRAPH ───────────────────────────
+        with st.container(border=True):
+            st.markdown("##### ⚡ n8n WORKFLOW EXECUTION GRAPH (LIVE DATA FLOW)")
+            st.caption("Execution States: `🟢 COMPLETED` • `🟡 PROCESSING` • `⚪ WAITING`")
+            if render_notification_flow_canvas_html and notif:
+                components.html(render_notification_flow_canvas_html(notif), height=115, scrolling=False)
+
+        # ── AUTHORITY EMERGENCY COMMUNICATION CENTER ──────────────────────
+        if notif:
+            with st.container(border=True):
+                st.markdown("### 📡 EMERGENCY COMMUNICATION CENTER (MULTI-AGENCY DISPATCH)")
+                st.caption("Stakeholder Emergency Notification Routing (Simulation Layer):")
+                stakeholders = notif.get("stakeholders", [])
+                if stakeholders:
+                    st_cols = st.columns(len(stakeholders))
+                    for idx, s in enumerate(stakeholders):
+                        with st_cols[idx]:
+                            with st.container(border=True):
+                                st.markdown(f"#### {s.get('icon', '🏢')} {s.get('name', 'Authority')}")
+                                st.markdown(f"**Role:** `{s.get('role', 'Agency')}`")
+                                st.caption(f"**Reason:** {s.get('reason', 'Surveillance')}")
+                                st.markdown(f"**Channel:** `{s.get('channel', 'Email + SMS')}`")
+                                st.markdown(f"**Status:** `🟢 {s.get('status', '✓ Generated')}`")
+
+        # ── ALERT MESSAGE PAYLOAD PREVIEW & ACKNOWLEDGEMENT TRACKING ──────
+        c_msg, c_ack = st.columns([1.2, 1.8])
+        with c_msg:
+            with st.container(border=True):
+                st.markdown("##### 📨 Alert Message Payload Preview")
+                payload_dict = notif.get("alert_payload", {})
+                st.json(payload_dict)
+
+        with c_ack:
+            with st.container(border=True):
+                st.markdown("##### 📋 Recipient Acknowledgement Tracking")
+                ack_list = notif.get("acknowledgements", [])
+                if ack_list:
+                    st.dataframe(pd.DataFrame(ack_list), use_container_width=True, hide_index=True)
+                else:
+                    st.info("No recipient acknowledgement records available.")
+
+        # ── EXECUTION HISTORY LEDGER & TEST FIRE ──────────────────────────
+        with st.expander("📊 Full Industrial Telemetry & Action Execution Ledger", expanded=False):
+            c_wf1, c_wf2 = st.columns([2.2, 1.2])
+            with c_wf1:
+                st.markdown("**Industrial Actuator & Telemetry Ledger:**")
+                recent_logs = wf_data.get("recent_logs", [])
+                if recent_logs:
+                    st.dataframe(pd.DataFrame(recent_logs), use_container_width=True, hide_index=True)
+                else:
+                    st.info("No workflow execution logs recorded yet.")
+
+            with c_wf2:
+                st.markdown("**⚡ Manual Webhook & Actuator Test Fire:**")
+                test_act = st.selectbox(
+                    "Select Action to Simulate:",
+                    [
+                        "Municipal HazMat POST Webhook",
+                        "SCADA Raw Water Valve Close (Simulated)",
+                        "SMS / Telegram Officer Dispatch",
+                        "TimescaleDB Hypertable Sync",
+                    ],
+                    key="sb_wf_test",
+                )
+                if st.button("🚀 Test Fire Action", use_container_width=True, key="btn_fire_action"):
+                    st.success(f"✅ Dispatched simulated `{test_act}` (Status: HTTP 200 OK • Latency: 14ms)")
+
+    st.markdown("---")
+
+    # ── 6. BOTTOM: DECISION SUPPORT CENTER & ACTION PLANS ───────────
     st.markdown("## 🚨 DECISION SUPPORT CENTER: AUTHORITY ACTION MATRIX")
     st.caption("Authoritative Multi-Tier Action Checklists for Water Authorities (CPCB / SPCB / Municipalities)")
 

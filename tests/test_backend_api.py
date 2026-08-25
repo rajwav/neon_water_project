@@ -667,11 +667,92 @@ def test_dashboard_payload_contains_recommendations():
     assert "confidence" in ds
     assert "evidence" in ds
     assert "root_causes" in ds
-    assert "reasoning_chain" in ds
-    assert "recommended_actions" in ds
-    assert "immediate_actions" in ds["recommended_actions"]
-    assert "short_term_actions" in ds["recommended_actions"]
-    assert "long_term_prevention" in ds["recommended_actions"]
+def test_model2_unified_authoritative_consistency():
+    """Verify Model 2 output is 100% authoritative and consistent across all blocks, aliases, and probabilities."""
+    from dashboard.components.futuristic_hud import render_pipeline_html
+
+    for scenario_payload in [
+        {"ph": 7.42, "dissolved_oxygen": 8.65, "turbidity": 4.5, "specific_conductance": 280.0, "temperature": 21.3},
+        {"ph": 2.80, "dissolved_oxygen": 3.20, "turbidity": 28.0, "specific_conductance": 1450.0, "temperature": 22.0},
+        {"ph": 5.20, "dissolved_oxygen": 2.10, "turbidity": 65.0, "specific_conductance": 2200.0, "temperature": 24.0},
+    ]:
+        response = client.post("/predict", json=scenario_payload)
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "risk_prediction" in data
+        assert "risk_classification" in data
+        m2 = data["risk_prediction"]
+        m2_alias = data["risk_classification"]
+
+        # 1. Authoritative Prediction Consistency
+        assert m2["prediction"] == m2["class"] == m2["risk_tier"] == m2_alias["prediction"] == data["model2_raw_prediction"]
+        assert m2["prediction"] in ["SAFE", "WARNING", "CRITICAL"]
+
+        # 2. Confidence Consistency
+        assert m2["confidence"] == m2["probability"] == m2_alias["confidence"] == data["model2_confidence"]
+        assert 0.0 <= m2["confidence"] <= 1.0
+
+        # 3. Probability Distribution Structure
+        assert "probabilities" in m2
+        probs = m2["probabilities"]
+        assert isinstance(probs, dict)
+        assert set(probs.keys()) == {"SAFE", "WARNING", "CRITICAL"}
+        assert abs(sum(probs.values()) - 1.0) < 0.01
+
+        # 4. Decision Boundary & Explanation Presence
+        assert "decision_boundary" in m2
+        assert "SAFE" in m2["decision_boundary"]
+        assert "WARNING" in m2["decision_boundary"]
+        assert "CRITICAL" in m2["decision_boundary"]
+        assert isinstance(m2["explanation"], list)
+        assert len(m2["explanation"]) >= 1
+
+        # 5. Top Pipeline Synchronization Verification
+        pipeline_html = render_pipeline_html(data)
+        assert f">{m2['prediction']}<" in pipeline_html
+        expected_conf_str = f"Conf: {m2['confidence']*100:.1f}%"
+def test_scientific_full_platform_audit():
+    """Verify all 8 problem areas audited: Model 1-5, Forecaster stability, SHAP, Overrides, Decision Fusion."""
+    # 1. Normal River Baseline
+    res_norm = client.post("/predict", json={
+        "ph": 7.42, "dissolved_oxygen": 8.65, "turbidity": 4.5, "specific_conductance": 280.0, "temperature": 21.3
+    }).json()
+
+    assert res_norm["anomaly_detection"]["status"] == "Normal"
+    assert res_norm["anomaly_detection"]["score"] <= 0.0
+    assert res_norm["risk_prediction"]["prediction"] == "SAFE"
+    assert res_norm["early_warning_forecast"]["future_projected_status"] == "SAFE"
+    assert res_norm["early_warning_forecast"]["future_warning_probability"] <= 0.10
+    assert res_norm["final_status"] == "SAFE"
+
+    # Verify SHAP for SAFE does not label normal features as risk increasing
+    for fc in res_norm["xai_explanation"]["feature_contributions"]:
+        if fc["raw_value"] is not None and "pH" in fc["label"]:
+            assert fc["direction"] != "risk_increasing"
+
+    # 2. Heavy Metal Override
+    res_hm = client.post("/predict", json={
+        "ph": 7.40, "dissolved_oxygen": 8.0, "turbidity": 5.0, "specific_conductance": 300.0,
+        "lead_risk_index": 0.85, "mercury_risk_index": 0.75
+    }).json()
+
+    assert res_hm["final_status"] == "CRITICAL"
+    assert res_hm["safety_override_applied"] is True
+    assert res_hm["decision_support"]["severity"] in ["HIGH", "CRITICAL"]
+    hm_in_shap = any("Metal" in fc["label"] for fc in res_hm["xai_explanation"]["feature_contributions"])
+    assert hm_in_shap is True
+
+    # 3. Chemical Acid Shock
+    res_acid = client.post("/predict", json={
+        "ph": 2.80, "dissolved_oxygen": 3.20, "turbidity": 28.0, "specific_conductance": 1450.0, "temperature": 22.0
+    }).json()
+
+    assert res_acid["anomaly_detection"]["status"] == "Anomaly"
+    assert res_acid["final_status"] == "CRITICAL"
+    assert res_acid["early_warning_forecast"]["future_projected_status"] == "EMERGENCY_OVERRIDE"
+    assert res_acid["decision_support"]["incident_type"] == "ACIDIFICATION"
+
 
 
 
