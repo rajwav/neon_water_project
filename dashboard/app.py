@@ -129,18 +129,141 @@ def load_geospatial_data() -> Dict[str, Any]:
     return {"active_node": {}, "proposed_expansion_zones": [], "summary": {}}
 
 
+FALLBACK_SCENARIOS: List[Dict[str, Any]] = [
+    {
+        "id": 1,
+        "name": "Normal River Water — Pristine Baseline",
+        "category": "NOMINAL",
+        "sensor_values": {
+            "ph": 7.42,
+            "dissolved_oxygen": 8.65,
+            "turbidity": 4.5,
+            "specific_conductance": 280.0,
+            "temperature": 21.3,
+            "nitrate_mg_l": 0.45,
+            "phosphate_mg_l": 0.015,
+            "chlorophyll_a_ug_l": 2.8,
+            "suspended_sediment": 35.0,
+            "lead_risk_index": 0.02,
+            "mercury_risk_index": 0.01,
+            "arsenic_risk_index": 0.01,
+            "microbial_risk_index": 5.0,
+        },
+    },
+    {
+        "id": 2,
+        "name": "Industrial Acid Spill — Chemical Emergency",
+        "category": "ACIDIFICATION",
+        "sensor_values": {
+            "ph": 2.80,
+            "dissolved_oxygen": 3.20,
+            "turbidity": 28.0,
+            "specific_conductance": 1450.0,
+            "temperature": 22.0,
+            "nitrate_mg_l": 4.50,
+            "phosphate_mg_l": 0.080,
+            "chlorophyll_a_ug_l": 1.0,
+            "suspended_sediment": 180.0,
+            "lead_risk_index": 0.65,
+            "mercury_risk_index": 0.30,
+            "arsenic_risk_index": 0.40,
+            "microbial_risk_index": 75.0,
+        },
+    },
+    {
+        "id": 3,
+        "name": "Eutrophication Event — Algal Bloom & Anoxia",
+        "category": "EUTROPHICATION",
+        "sensor_values": {
+            "ph": 8.65,
+            "dissolved_oxygen": 1.80,
+            "turbidity": 32.0,
+            "specific_conductance": 580.0,
+            "temperature": 26.5,
+            "nitrate_mg_l": 8.20,
+            "phosphate_mg_l": 0.350,
+            "chlorophyll_a_ug_l": 42.0,
+            "suspended_sediment": 65.0,
+            "lead_risk_index": 0.05,
+            "mercury_risk_index": 0.02,
+            "arsenic_risk_index": 0.02,
+            "microbial_risk_index": 120.0,
+        },
+    },
+    {
+        "id": 4,
+        "name": "Sediment Runoff — Construction Erosion Event",
+        "category": "SEDIMENT_RUNOFF",
+        "sensor_values": {
+            "ph": 7.15,
+            "dissolved_oxygen": 7.10,
+            "turbidity": 85.0,
+            "specific_conductance": 390.0,
+            "temperature": 20.5,
+            "nitrate_mg_l": 1.20,
+            "phosphate_mg_l": 0.045,
+            "chlorophyll_a_ug_l": 3.5,
+            "suspended_sediment": 420.0,
+            "lead_risk_index": 0.08,
+            "mercury_risk_index": 0.03,
+            "arsenic_risk_index": 0.02,
+            "microbial_risk_index": 35.0,
+        },
+    },
+    {
+        "id": 5,
+        "name": "Toxic Contamination — Heavy Metal Industrial Discharge",
+        "category": "TOXIC_METALS",
+        "sensor_values": {
+            "ph": 6.10,
+            "dissolved_oxygen": 5.40,
+            "turbidity": 24.0,
+            "specific_conductance": 920.0,
+            "temperature": 23.5,
+            "nitrate_mg_l": 2.80,
+            "phosphate_mg_l": 0.060,
+            "chlorophyll_a_ug_l": 1.8,
+            "suspended_sediment": 95.0,
+            "lead_risk_index": 0.88,
+            "mercury_risk_index": 0.72,
+            "arsenic_risk_index": 0.65,
+            "microbial_risk_index": 45.0,
+        },
+    },
+]
+
+
 @st.cache_data(ttl=600)
 def load_scenarios() -> Dict[str, Any]:
     if SCENARIOS_PATH.exists():
         with open(SCENARIOS_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
-    return {"scenarios": []}
+    return {"scenarios": FALLBACK_SCENARIOS}
+
+
+def get_all_scenarios() -> List[Dict[str, Any]]:
+    """Return complete scenario list from json or robust fallback."""
+    loaded = load_scenarios().get("scenarios", [])
+    return loaded if loaded else FALLBACK_SCENARIOS
+
+
+def get_scenario_by_name(name: str) -> Dict[str, Any]:
+    """Retrieve scenario dictionary by exact or normalized name."""
+    all_sc = get_all_scenarios()
+    for s in all_sc:
+        if s.get("name") == name:
+            return s
+    for s in all_sc:
+        if name.lower() in s.get("name", "").lower() or s.get("name", "").lower() in name.lower():
+            return s
+    return all_sc[0]
 
 
 geo_data = load_geospatial_data()
 active_node_info = geo_data.get("active_node", {})
 proposed_zones_list = geo_data.get("proposed_expansion_zones", [])
 scenarios_data = load_scenarios()
+sc_list = get_all_scenarios()
 
 
 # ── Session State Management ───────────────────────────────────────
@@ -324,14 +447,14 @@ with st.sidebar:
 
     else:
         # Scenario Preset Switcher (Manual Simulation Mode)
-        sc_list = scenarios_data.get("scenarios", [])
+        sc_list = get_all_scenarios()
         sc_names = [s.get("name", f"Scenario {i}") for i, s in enumerate(sc_list)]
         current_active = st.session_state.get("active_scenario_name", "Normal River Water — Pristine Baseline")
         current_idx = sc_names.index(current_active) if current_active in sc_names else 0
 
         def on_sidebar_scenario_change():
             sel = st.session_state.get("sidebar_scenario_selectbox")
-            matched = next((s for s in sc_list if s.get("name") == sel), None)
+            matched = get_scenario_by_name(sel)
             if matched:
                 v = matched.get("sensor_values", {})
                 st.session_state["active_scenario_name"] = sel
@@ -355,10 +478,10 @@ with st.sidebar:
                 key="sidebar_scenario_selectbox",
                 on_change=on_sidebar_scenario_change,
             )
-            active_sc = next((s for s in sc_list if s.get("name") == selected_sc_name), sc_list[0])
+            active_sc = get_scenario_by_name(selected_sc_name)
         else:
             selected_sc_name = "Normal River Water — Pristine Baseline"
-            active_sc = None
+            active_sc = get_scenario_by_name(selected_sc_name)
 
         preset_vals = active_sc.get("sensor_values", {}) if active_sc else {}
 
@@ -1309,7 +1432,7 @@ elif st.session_state["nav_screen"] == "Screen 3: AI Model Intelligence Center":
                     st.session_state["last_loaded_sc"] = target_preset
 
                     # Synchronize all sliders immediately to target scenario values
-                    match_sc = next((s for s in sc_list if s.get("name") == target_preset), None)
+                    match_sc = get_scenario_by_name(target_preset)
                     if match_sc:
                         vals = match_sc.get("sensor_values", {})
                         st.session_state["slider_ph"] = float(vals.get("ph", 7.42))
