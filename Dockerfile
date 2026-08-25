@@ -30,12 +30,12 @@ COPY . .
 # Ensure data directory exists and set permissions
 RUN mkdir -p /app/data && chmod +x /app/start_platform.sh
 
-# Expose ports for FastAPI (8000) and Streamlit (8501)
-EXPOSE 8000 8501
+# Expose port for Streamlit Command Center (Render binds public traffic here)
+EXPOSE 8501
 
-# Healthcheck targeting FastAPI microservice
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+# Healthcheck targeting Streamlit Command Center
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-8501}/_stcore/health || exit 1
 
 # Start services via unified launch script
 CMD ["/bin/bash", "./start_platform.sh"]

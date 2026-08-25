@@ -213,6 +213,18 @@ class HealthResponse(BaseModel):
 
 # ── Endpoints ──────────────────────────────────────────────────────
 
+@app.get("/")
+def root_endpoint():
+    """Root endpoint providing service status and links to documentation."""
+    return {
+        "service": "AQUA NEON Water Intelligence Platform API",
+        "status": "online",
+        "health": "/health",
+        "docs": "/docs",
+        "version": "5.0.0",
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 def health_check():
     """Health check endpoint confirming service status and multi-domain model catalog."""

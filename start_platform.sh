@@ -8,9 +8,18 @@ set -e
 
 echo "🌊 Starting AQUA NEON National Water Intelligence Platform..."
 
-# 1. Start FastAPI Backend Microservice in Background (Port 8000)
-echo "🚀 Launching FastAPI Backend on port 8000..."
-uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
+# 1. Determine Public Streamlit Port (Render provides $PORT, default 8501)
+STREAMLIT_PORT=${PORT:-8501}
+
+# 2. Start FastAPI Backend Microservice on internal port (avoids collision if PORT=8000)
+if [ "$STREAMLIT_PORT" = "8000" ]; then
+    FASTAPI_PORT=8008
+else
+    FASTAPI_PORT=8000
+fi
+
+echo "🚀 Launching FastAPI Backend on internal port ${FASTAPI_PORT}..."
+uvicorn backend.main:app --host 0.0.0.0 --port "${FASTAPI_PORT}" &
 FASTAPI_PID=$!
 
 # Trap signals to gracefully terminate FastAPI when Streamlit stops
@@ -19,7 +28,6 @@ trap "kill $FASTAPI_PID 2>/dev/null || true" EXIT
 # Allow FastAPI to initialize
 sleep 2
 
-# 2. Launch Streamlit National Command Center (Dynamic Port for Render/Heroku/Docker)
-STREAMLIT_PORT=${PORT:-8501}
+# 3. Launch Streamlit National Command Center on Public Port
 echo "🖥️ Launching Streamlit Command Center on port ${STREAMLIT_PORT}..."
-streamlit run app.py --server.port "${STREAMLIT_PORT}" --server.address 0.0.0.0 --server.headless true
+exec streamlit run app.py --server.port "${STREAMLIT_PORT}" --server.address 0.0.0.0 --server.headless true --browser.gatherUsageStats false
