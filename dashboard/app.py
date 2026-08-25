@@ -91,7 +91,7 @@ except ImportError:
 
 
 # ── API & File Configuration ───────────────────────────────────────
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = os.getenv("FASTAPI_URL", "http://127.0.0.1:8000")
 PREDICT_ENDPOINT = f"{API_BASE_URL}/predict"
 HEALTH_ENDPOINT = f"{API_BASE_URL}/health"
 

@@ -11,15 +11,16 @@ echo "🌊 Starting AQUA NEON National Water Intelligence Platform..."
 # 1. Determine Public Streamlit Port (Render provides $PORT, default 8501)
 STREAMLIT_PORT=${PORT:-8501}
 
-# 2. Start FastAPI Backend Microservice on internal port (avoids collision if PORT=8000)
+# 2. Start FastAPI Backend Microservice on internal loopback (avoids collision if PORT=8000)
 if [ "$STREAMLIT_PORT" = "8000" ]; then
     FASTAPI_PORT=8008
 else
     FASTAPI_PORT=8000
 fi
 
-echo "🚀 Launching FastAPI Backend on internal port ${FASTAPI_PORT}..."
-uvicorn backend.main:app --host 0.0.0.0 --port "${FASTAPI_PORT}" &
+export FASTAPI_URL="http://127.0.0.1:${FASTAPI_PORT}"
+echo "🚀 Launching FastAPI Backend on internal loopback ${FASTAPI_URL}..."
+uvicorn backend.main:app --host 127.0.0.1 --port "${FASTAPI_PORT}" &
 FASTAPI_PID=$!
 
 # Trap signals to gracefully terminate FastAPI when Streamlit stops
