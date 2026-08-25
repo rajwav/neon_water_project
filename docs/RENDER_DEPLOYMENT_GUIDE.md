@@ -33,7 +33,7 @@ This guide details how to deploy **AQUA NEON** to Render.com with both the **Fas
    - Select your repository `neon_water_project` / `AQUA_NEON`.
 
 4. **Configure Service**:
-   - **Name**: `aqua-neon` (or `neon-water-platform`)
+   - **Name**: `autonex-aqua-neon`
    - **Region**: Singapore / Oregon / Frankfurt (closest to your audience)
    - **Branch**: `main`
    - **Runtime**: **Docker** (Render will automatically detect your `Dockerfile`)
@@ -42,7 +42,7 @@ This guide details how to deploy **AQUA NEON** to Render.com with both the **Fas
 5. **Deploy**:
    - Click **"Create Web Service"**.
    - Render will build the Docker container and start `start_platform.sh`.
-   - Your public URL will be ready: `https://aqua-neon.onrender.com`.
+   - Your public URL will be ready: `https://autonex-aqua-neon.onrender.com`.
 
 ---
 
@@ -64,7 +64,7 @@ If you prefer deploying without Docker:
 ## 🔍 Post-Deployment Verification
 
 Once Render displays **"Live"**:
-1. Open your Render URL (`https://aqua-neon.onrender.com`).
+1. Open your Render URL (`https://autonex-aqua-neon.onrender.com`).
 2. Verify:
    - Screen 1: PyDeck GIS dark map renders with river lines and Hirakud node.
    - Screen 2: Digital Twin water column renders with live 5-second telemetry.

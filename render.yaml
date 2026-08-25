@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: aqua-neon
+    name: autonex-aqua-neon
     runtime: docker
     plan: free
     region: oregon
