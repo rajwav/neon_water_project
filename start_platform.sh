@@ -26,8 +26,14 @@ FASTAPI_PID=$!
 # Trap signals to gracefully terminate FastAPI when Streamlit stops
 trap "kill $FASTAPI_PID 2>/dev/null || true" EXIT
 
-# Allow FastAPI to initialize
-sleep 2
+# Allow FastAPI to finish loading models before launching Streamlit (prevents duplicate RAM load)
+for i in $(seq 1 25); do
+    if curl -sf "${FASTAPI_URL}/health" >/dev/null 2>&1; then
+        echo "✅ FastAPI Backend is healthy after ${i}s"
+        break
+    fi
+    sleep 1
+done
 
 # 3. Launch Streamlit National Command Center on Public Port
 echo "🖥️ Launching Streamlit Command Center on port ${STREAMLIT_PORT}..."

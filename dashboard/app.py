@@ -110,12 +110,16 @@ if not GEO_NODES_PATH.exists():
 SCENARIOS_PATH = PROJECT_ROOT / "demo" / "scenarios.json"
 
 
-FALLBACK_ENGINE_AVAILABLE = False
-try:
-    from backend.model_loader import engine as fallback_engine
-    FALLBACK_ENGINE_AVAILABLE = True
-except Exception:
-    pass
+_fallback_engine_cache = None
+
+
+def _get_fallback_engine():
+    """Lazily load backend.model_loader only when FastAPI microservice is unavailable."""
+    global _fallback_engine_cache
+    if _fallback_engine_cache is None:
+        from backend.model_loader import engine as _engine
+        _fallback_engine_cache = _engine
+    return _fallback_engine_cache
 
 # ── Streamlit Page Configuration ───────────────────────────────────
 st.set_page_config(
@@ -294,30 +298,27 @@ def call_prediction_api(payload: Dict[str, Any]) -> Tuple[Dict[str, Any], bool, 
     except Exception:
         pass
 
-    if FALLBACK_ENGINE_AVAILABLE:
-        try:
-            res = fallback_engine.predict(
-                ph=payload.get("ph", 7.4),
-                dissolved_oxygen=payload.get("dissolved_oxygen", 8.0),
-                turbidity=payload.get("turbidity", 5.0),
-                specific_conductance=payload.get("specific_conductance", 300.0),
-                temperature=payload.get("temperature", 21.0),
-                site_id="HIRAKUD_NODE",
-                sensor_position="001",
-                nitrate_mg_l=payload.get("nitrate_mg_l"),
-                phosphate_mg_l=payload.get("phosphate_mg_l"),
-                chlorophyll_a_ug_l=payload.get("chlorophyll_a_ug_l"),
-                suspended_sediment=payload.get("suspended_sediment"),
-                lead_risk_index=payload.get("lead_risk_index"),
-                mercury_risk_index=payload.get("mercury_risk_index"),
-                arsenic_risk_index=payload.get("arsenic_risk_index"),
-                microbial_risk_index=payload.get("microbial_risk_index"),
-            )
-            return res, True, "Direct Python Fallback Engine"
-        except Exception as e:
-            return {}, False, f"Engine Error: {str(e)}"
-
-    return {}, False, "Backend API unavailable"
+    try:
+        res = _get_fallback_engine().predict(
+            ph=payload.get("ph", 7.4),
+            dissolved_oxygen=payload.get("dissolved_oxygen", 8.0),
+            turbidity=payload.get("turbidity", 5.0),
+            specific_conductance=payload.get("specific_conductance", 300.0),
+            temperature=payload.get("temperature", 21.0),
+            site_id="HIRAKUD_NODE",
+            sensor_position="001",
+            nitrate_mg_l=payload.get("nitrate_mg_l"),
+            phosphate_mg_l=payload.get("phosphate_mg_l"),
+            chlorophyll_a_ug_l=payload.get("chlorophyll_a_ug_l"),
+            suspended_sediment=payload.get("suspended_sediment"),
+            lead_risk_index=payload.get("lead_risk_index"),
+            mercury_risk_index=payload.get("mercury_risk_index"),
+            arsenic_risk_index=payload.get("arsenic_risk_index"),
+            microbial_risk_index=payload.get("microbial_risk_index"),
+        )
+        return res, True, "Direct Python Fallback Engine"
+    except Exception as e:
+        return {}, False, f"Engine Error: {str(e)}"
 
 
 # ── SIDEBAR: Navigation & Telemetry Mode Controller ────────────────
