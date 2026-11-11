@@ -17,6 +17,10 @@ from .geospatial_map import (
     COLOR_ACTIVE_OPERATIONAL,
     COLOR_PROPOSED_EXPANSION,
 )
+from .dmw_studio import (
+    render_eda_preprocessing_screen,
+    render_database_warehouse_screen,
+)
 
 __all__ = [
     "water_alert",
@@ -30,4 +34,6 @@ __all__ = [
     "build_hirakud_basin_deck",
     "COLOR_ACTIVE_OPERATIONAL",
     "COLOR_PROPOSED_EXPANSION",
+    "render_eda_preprocessing_screen",
+    "render_database_warehouse_screen",
 ]

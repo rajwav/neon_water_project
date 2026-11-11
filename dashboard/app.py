@@ -46,6 +46,10 @@ try:
         build_hirakud_basin_deck,
         build_national_deployment_deck,
     )
+    from dashboard.components.dmw_studio import (
+        render_eda_preprocessing_screen,
+        render_database_warehouse_screen,
+    )
 except ImportError:
     from components.alerts import water_alert
     from components.futuristic_hud import (
@@ -59,6 +63,10 @@ except ImportError:
     from components.geospatial_map import (
         build_hirakud_basin_deck,
         build_national_deployment_deck,
+    )
+    from components.dmw_studio import (
+        render_eda_preprocessing_screen,
+        render_database_warehouse_screen,
     )
 
 try:
@@ -327,18 +335,22 @@ with st.sidebar:
     )
 
     st.markdown("##### 🧭 Command Console Screen")
+    _screen_options = [
+        "Screen 1: National Deployment Map",
+        "Screen 2: Hirakud Digital Twin Node",
+        "Screen 3: AI Model Intelligence Center",
+        "Screen 4: EDA & Data Preprocessing Studio",
+        "Screen 5: Database & Warehouse Demo",
+    ]
+    _default_idx = (
+        _screen_options.index(st.session_state["nav_screen"])
+        if st.session_state["nav_screen"] in _screen_options
+        else 0
+    )
     screen_selection = st.radio(
         "Navigate Platform:",
-        [
-            "Screen 1: National Deployment Map",
-            "Screen 2: Hirakud Digital Twin Node",
-            "Screen 3: AI Model Intelligence Center",
-        ],
-        index=[
-            "Screen 1: National Deployment Map",
-            "Screen 2: Hirakud Digital Twin Node",
-            "Screen 3: AI Model Intelligence Center",
-        ].index(st.session_state["nav_screen"]),
+        _screen_options,
+        index=_default_idx,
         key="nav_screen_selector",
     )
     st.session_state["nav_screen"] = screen_selection
@@ -1702,5 +1714,19 @@ elif st.session_state["nav_screen"] == "Screen 3: AI Model Intelligence Center":
         st.json(m4_block)
         st.markdown("##### 📤 Model 5 (Decision Support & Response Actions)")
         st.json(m5_block)
+
+
+# ===================================================================
+# SCREEN 4: EDA & DATA PREPROCESSING STUDIO (DMW PRESENTATION)
+# ===================================================================
+elif st.session_state["nav_screen"] == "Screen 4: EDA & Data Preprocessing Studio":
+    render_eda_preprocessing_screen(PROJECT_ROOT)
+
+
+# ===================================================================
+# SCREEN 5: DATABASE & DATA WAREHOUSE DEMO
+# ===================================================================
+elif st.session_state["nav_screen"] == "Screen 5: Database & Warehouse Demo":
+    render_database_warehouse_screen(PROJECT_ROOT, active_payload, ai_result)
 
 
