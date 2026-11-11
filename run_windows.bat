@@ -3,11 +3,19 @@ setlocal enabledelayedexpansion
 title AQUA NEON - Local Windows Launcher
 
 echo ====================================================================
-echo   AQUA NEON Water Intelligence Platform - Windows Setup & Launcher
+echo   AQUA NEON Water Intelligence Platform - Windows Setup ^& Launcher
 echo ====================================================================
 echo.
 
 cd /d "%~dp0"
+
+set "FORCE_INSTALL=0"
+if /i "%~1"=="--reinstall" set "FORCE_INSTALL=1"
+
+if "%FORCE_INSTALL%"=="0" if exist ".venv\Scripts\streamlit.exe" if exist ".venv\.deps_installed" (
+    echo [OFFLINE READY] Existing environment detected. Skipping pip install.
+    goto :LAUNCH
+)
 
 set "PY_CMD="
 where py >nul 2>nul
@@ -42,7 +50,7 @@ if not exist ".venv\Scripts\python.exe" (
     echo [1/3] Virtual environment .venv already exists.
 )
 
-echo [2/3] Installing dependencies ^(first run may take 2-4 minutes^)...
+echo [2/3] Installing dependencies ^(internet needed ONLY on first run^)...
 ".venv\Scripts\python.exe" -m pip install --upgrade pip >nul 2>nul
 ".venv\Scripts\python.exe" -m pip install -r requirements.txt
 if errorlevel 1 (
@@ -58,9 +66,12 @@ if errorlevel 1 (
     )
 )
 
+echo ok> ".venv\.deps_installed"
+
+:LAUNCH
 echo.
 echo [3/3] Launching AQUA NEON Streamlit App at http://localhost:8501 ...
-echo Keep this window open while presenting. Press Ctrl+C to stop.
+echo Works 100%% offline once setup is complete. Press Ctrl+C to stop.
 echo.
 ".venv\Scripts\streamlit.exe" run app.py --server.port 8501 --browser.gatherUsageStats false
 pause
