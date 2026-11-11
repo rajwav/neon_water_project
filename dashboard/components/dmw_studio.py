@@ -23,6 +23,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -327,11 +328,16 @@ def render_eda_preprocessing_screen(project_root: Path) -> None:
                     ]
                     sel_col = st.selectbox("Inspect Distribution in USGS Warehouse:", num_cols, key="s4_eda_dist_col")
                     series = usgs_df[sel_col].dropna()
-                    # Clip top 1% visually only for readable histogram binning while reporting true max
+                    # Clip top 1% visually and pre-bin in Python so WebSocket sends 35 bars instead of 77k points
                     q99 = float(series.quantile(0.99)) if len(series) > 0 else 1.0
-                    fig_hist = px.histogram(
-                        series[series <= q99],
-                        nbins=40,
+                    clipped = series[series <= q99].to_numpy()
+                    counts, edges = np.histogram(clipped, bins=35)
+                    bin_labels = [f"{edges[i]:.2g}–{edges[i+1]:.2g}" for i in range(len(counts))]
+                    df_hist = pd.DataFrame({"Range Bin": bin_labels, "Count": counts})
+                    fig_hist = px.bar(
+                        df_hist,
+                        x="Range Bin",
+                        y="Count",
                         title=f"Distribution of `{sel_col}` (<= 99th pct | True Max = {series.max():.2f})",
                     )
                     fig_hist.update_layout(template="plotly_dark", height=290, showlegend=False)

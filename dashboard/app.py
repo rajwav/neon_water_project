@@ -578,8 +578,12 @@ st.info(
 
 
 
-# ── EXECUTE PREDICTION ENGINE ──────────────────────────────────────
-ai_result, api_ok, api_source = call_prediction_api(active_payload)
+# ── EXECUTE PREDICTION ENGINE (Skipped on Screen 4 DMW Studio for low-latency rendering) ──
+if st.session_state["nav_screen"] == "Screen 4: EDA & Data Preprocessing Studio":
+    ai_result, api_ok, api_source = {}, True, "DMW Presentation Mode"
+else:
+    ai_result, api_ok, api_source = call_prediction_api(active_payload)
+
 final_status = ai_result.get("final_status", "SAFE")
 wqi_score = float(ai_result.get("water_quality_index", 85.0))
 m1_block = ai_result.get("anomaly_detection", {})
@@ -599,7 +603,7 @@ wf_data = (
             "temperature_c": round(incident_parameters["temperature"], 1),
         },
     )
-    if workflow_engine
+    if (workflow_engine and st.session_state["nav_screen"] != "Screen 4: EDA & Data Preprocessing Studio")
     else {}
 )
 
